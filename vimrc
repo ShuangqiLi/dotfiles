@@ -106,9 +106,10 @@ function! VisualSelection() range
   let @" = l:saved_reg
 endfunction
 
+map <F3> : UndotreeToggle<CR>
 map <F4> : call FilelistToggle()<CR>
 map <F5> : call UpdateCtags()<CR>
-map <F6> : UndotreeToggle<CR>
+map <F6> : call QuickFixToggle()<CR>
 map <F7> : NERDTreeToggle<CR>
 map <F8> : TagbarToggle<CR>
 map <F9> : call RefreshAnsiLog()<CR>
@@ -128,6 +129,14 @@ function! FilelistToggle()
   tabnew `git rev-parse --show-toplevel`/cscope.files
 endfunction
 
+function! QuickFixToggle()
+  if empty(filter(range(1, winnr('$')), 'getwinvar(v:var, "&buftype") == "quickfix"'))
+    copen
+  else
+    cclose
+  endif
+endfunction
+
 function! RefreshAnsiLog()
   execute ":AnsiEsc"
   execute ":%s/\r//g"
@@ -136,7 +145,7 @@ endfunction
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Ctags & Cscope
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""
-set tag=tag;
+set tags=tags;
 set autochdir
 
 if has("cscope")
@@ -187,7 +196,14 @@ Plugin 'vhda/verilog_systemverilog.vim'
 call vundle#end()
 filetype plugin indent on
 
+let g:NERDTreeMinimalUI = 1
+let g:NERDTreeHidden = 0
+let g:NERDTreeIgnore = ['\.pyc$']
+let g:tagbar_compact = 1
 let g:tagbar_autofocus = 1
+highlight clear TagbarHighlight
+highlight link TagbarHighlight NONE
+highlight TagbarHighlight cterm=bold gui=bold
 
 " lightline
 set laststatus=2
@@ -231,6 +247,8 @@ if has("autocmd")
   au VimEnter * exec ":cd " . expand("%:p:h")
   " remove white-space EOL
   au BufWritePre * %s/\s\+$//e
+  " change quickfix window position
+  au FileType qf wincmd J
   " set files filetype
   au BufNewFile,BufRead *.fl set filetype=perl
   au BufNewFile,BufRead SConsturct set filetype=python
