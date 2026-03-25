@@ -1,0 +1,5 @@
+# Copy to gitconfig.local (ignored by git) — install does: cp -n gitconfig.local.example gitconfig.local
+#
+[user]
+  email = you@example.com
+  name = Your Name

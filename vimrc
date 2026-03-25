@@ -15,8 +15,12 @@ set showmatch
 set smartcase
 set incsearch
 set nohidden
-set noswapfile
-set nobackup
+set swapfile
+set backup
+set undofile
+set directory=~/.cache/vim/swap//
+set backupdir=~/.cache/vim/backup//
+set undodir=~/.cache/vim/undo//
 set magic
 set autoread
 set autowrite
@@ -178,23 +182,19 @@ nmap <leader>f :cs find f <C-R>=expand("<cfile>")<CR><CR>
 nmap <leader>i :cs find i <C-R>=expand("<cfile>")<CR><CR>
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""
-" => Plugin
+" => Plugin (vim-plug — autoload/plug.vim ships with this dotfiles vim dir)
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""
 set nocompatible
-filetype off
-set rtp+=~/.vim/bundle/Vundle.vim
-call vundle#begin()
-Plugin 'VundleVim/Vundle.vim'
-Plugin 'scrooloose/nerdtree'
-Plugin 'jayli/vim-easycomplete'
-Plugin 'mbbill/undotree'
-Plugin 'majutsushi/tagbar'
-Plugin 'itchyny/lightline.vim'
-Plugin 'tpope/vim-fugitive'
-Plugin 'Kocha/vim-systemc'
-Plugin 'vhda/verilog_systemverilog.vim'
-call vundle#end()
-filetype plugin indent on
+call plug#begin('~/.cache/vim/plugged')
+Plug 'preservim/nerdtree'
+Plug 'jayli/vim-easycomplete'
+Plug 'mbbill/undotree'
+Plug 'preservim/tagbar'
+Plug 'itchyny/lightline.vim'
+Plug 'tpope/vim-fugitive'
+Plug 'Kocha/vim-systemc'
+Plug 'vhda/verilog_systemverilog.vim'
+call plug#end()
 
 let g:NERDTreeMinimalUI = 1
 let g:NERDTreeHidden = 0

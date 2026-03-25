@@ -1,1 +1,7 @@
 vim/bundle/*
+vim/plugged/
+fonts/.uuid
+
+# Machine-specific (never push)
+gitconfig.local
+local/env.zsh

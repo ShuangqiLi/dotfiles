@@ -3,24 +3,34 @@
       create: true
       relink: true
 
+# Removes *broken* symlinks under $HOME only (see README).
 - clean: ['~']
+
+# Create gitignored files from templates before linking (see .gitignore).
+- shell:
+  - [cp -n gitconfig.local.example gitconfig.local, Ensuring gitconfig.local from template]
 
 - link:
     ~/.vimrc: vimrc
     ~/.vim: vim
     ~/.zshrc: zshrc
-    ~/.antigen: antigen
+    ~/.zsh_plugins.txt: zsh_plugins.txt
+    ~/.antidote: antidote
+    ~/.bashrc:
+      path: bashrc
+      force: true
     ~/.p10k.zsh: p10k.zsh
     ~/.gitconfig: gitconfig
+    ~/.gitconfig.local:
+      path: gitconfig.local
+      force: true
     ~/.gitignore_global: gitignore_global
     ~/.fonts: fonts
     ~/.fzf: fzf
-    ~/.tmux: tmux
-    ~/.tmux.conf: tmux.conf
-    ~/.local/bin/fasd: fasd
 
 - shell:
-  - [git submodule update --init --recursive, Installing submodules]
+  - [mkdir -p ~/.cache/vim/swap ~/.cache/vim/backup ~/.cache/vim/undo ~/.cache/vim/plugged, Creating Vim cache directories]
+  - [bash -c 'if [[ -n "${SKIP_MESLO_FONTS:-}" ]]; then echo "SKIP_MESLO_FONTS=1: skipping Meslo download"; else exec bash scripts/install-meslo-fonts.sh; fi', Installing MesloLGS NF fonts]
   - [fc-cache -f ~/.fonts, Rebuilding font cache]
   - [~/.fzf/install --no-bash, Installing fzf]
-  - [vim +PluginInstall +qall, Installing vim plugins with Vundle]
+  - [vim -E -s -u ~/.vimrc -c "PlugInstall --sync" -c "qa", Installing Vim plugins with vim-plug]
