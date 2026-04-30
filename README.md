@@ -10,6 +10,7 @@ Managed with [Dotbot](https://github.com/anishathalye/dotbot/). Zsh plugins use 
 - **Zsh** as your login shell (optional but expected by this config)
 - **curl** or network access for submodules, Vim plugins, and **optional** Meslo download (skipped when TTFs are already in `fonts/`)
 - **Build toolchain** for [fzf](https://github.com/junegunn/fzf) if you use the bundled `fzf/install` step (see fzf docs)
+- **VS Code** (optional): `code` CLI in `PATH`. For **offline** targets, run **`scripts/fetch-vscode-vsix.sh`** on a connected machine and **commit `vscode/vsix/*.vsix`** so `./install` never hits the Marketplace. See **`vscode/README.md`**. Use `SKIP_VSCODE_EXTENSIONS=1` to skip the step.
 
 ## Install
 
@@ -17,6 +18,8 @@ Managed with [Dotbot](https://github.com/anishathalye/dotbot/). Zsh plugins use 
 2. Run `./install` (idempotent; safe to run again).
 
 **Fonts:** MesloLGS NF **can live in git** (see `fonts/README.md` + `MesloLGS NF License.txt`). After you add the four `*.ttf` once, `./install` skips downloading them. If download still fails on a fresh machine, use `SKIP_MESLO_FONTS=1 ./install` or copy TTFs in by hand.
+
+**Fully air-gapped hosts:** VS Code extensions are covered if you **vendor `vscode/vsix/*.vsix`** (see `vscode/README.md`). Other steps may still expect network the first time (e.g. **Git submodules**, **vim `PlugInstall`**, **Antidote** cloning plugins when you open zsh, **fzf** build). For a sealed environment, vendor those artifacts too or set skips (`SKIP_MESLO_FONTS`, `SKIP_VSCODE_EXTENSIONS`, etc.) and pre-populate caches as needed.
 
 If you already have a `~/.bashrc` you care about, back it up first: Dotbot links `~/.bashrc` to this repo’s `bashrc` with `force: true`.
 
@@ -73,6 +76,7 @@ See also [Powerlevel10k fonts](https://github.com/romkatv/powerlevel10k#fonts).
 - `vimrc`, `vim/autoload/plug.vim` — Vim + vim-plug (plugins under `~/.cache/vim/plugged`)
 - `fonts/` — Meslo via script; see `fonts/README.md`
 - `local/` — optional per-machine `env.zsh`; see `local/README.md`
+- `vscode/` — VS Code `settings.json`, `keybindings.json`, pinned `extensions.txt` (target version in `vscode/target-version.txt`); see `vscode/README.md`
 
 ## References
 

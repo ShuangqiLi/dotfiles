@@ -1,0 +1,22 @@
+{
+  // Dotfiles-managed VS Code settings (target: see vscode/target-version.txt)
+  "window.titleBarStyle": "custom",
+  "editor.fontSize": 14,
+  "editor.fontFamily": "'MesloLGS NF', 'JetBrains Mono', 'Fira Code', Consolas, monospace",
+  "editor.tabSize": 4,
+  "editor.insertSpaces": true,
+  "editor.formatOnSave": false,
+  "editor.minimap.enabled": true,
+  "editor.wordWrap": "off",
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "files.eol": "\n",
+  "terminal.integrated.fontSize": 14,
+  "terminal.integrated.fontFamily": "'MesloLGS NF', monospace",
+  "workbench.colorTheme": "Default Dark Modern",
+  "git.autofetch": true,
+  "git.confirmSync": false,
+  "explorer.confirmDelete": true,
+  "extensions.autoCheckUpdates": false,
+  "extensions.autoUpdate": false
+}

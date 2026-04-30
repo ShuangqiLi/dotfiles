@@ -1,0 +1,25 @@
+# VS Code 1.85.2 — one id@version per line (comments and blank lines ok).
+# Re-export from a live install:  code --list-extensions --show-versions
+# Vendored VSIX:  bash scripts/fetch-vscode-vsix.sh
+# If Market returns 404, open the extension’s “Version History” and pick a 1.85‑era build.
+
+# —— UI / locale ——
+MS-CEINTL.vscode-language-pack-zh-hans@1.85.2024021418
+
+# —— Python / C++ ——
+ms-python.python@2024.0.3
+ms-vscode.cpptools@1.18.5
+
+# —— Git ——
+eamodio.gitlens@14.6.1
+
+# —— Editor / formatting ——
+editorconfig.editorconfig@0.16.6
+esbenp.prettier-vscode@10.4.0
+dbaeumer.vscode-eslint@2.4.4
+
+# —— Modal editing / text tools ——
+vscodevim.vim@1.27.3
+twxs.cmake@0.0.17
+earshinov.filter-lines@1.1.0
+yzhang.markdown-all-in-one@3.5.1
