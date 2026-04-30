@@ -142,7 +142,7 @@ Plug '~/.vim/plugins-vendor/nerdtree'
 Powerlevel10k 要求 `zsh >= 5.1`。如果 `$ZSH_VERSION` 太老（典型场景：RHEL/CentOS 7 自带 5.0.2，且不允许升级 zsh），`zsh/zshrc` 会自动改用它的前身 **Powerlevel9k**：
 
 - `zsh/vendor/powerlevel10k/` —— `zsh >= 5.1` 时使用，配置文件 `zsh/p10k.zsh`（链到 `~/.p10k.zsh`）。
-- `zsh/vendor/powerlevel9k/`  —— `zsh < 5.1` 时使用，配置文件 `zsh/p9k.zsh`（链到 `~/.p9k.zsh`；未链接时 `zshrc` 会从 `$DOTFILES/zsh/p9k.zsh` 直接加载）。右侧 prompt 段仅包含当前 vendor 快照里存在的 segment（本仓库内的 P9K 无 `terraform` 段）。对内置的 `powerlevel9k.zsh-theme` 做了一处小补丁：在 `build_left_prompt` / `build_right_prompt` 里跳过空 segment，避免旧 zsh / 异常配置触发 `command not found: prompt_`。**若你用 `scripts/update-vendor.sh` 刷新 Powerlevel9k，需保留或重新合入这两行 `continue`。** rainbow 风格，整体外观与 p10k preset 接近。
+- `zsh/vendor/powerlevel9k/`  —— `zsh < 5.1` 时使用，配置文件 `zsh/p9k.zsh`（链到 `~/.p9k.zsh`；未链接时 `zshrc` 会从 `$DOTFILES/zsh/p9k.zsh` 直接加载）。右侧 prompt 段仅包含当前 vendor 快照里存在的 segment（本仓库内的 P9K 无 `terraform` 段）。对 vendored Powerlevel9k 做了小补丁：`powerlevel9k.zsh-theme` 里在 `build_left_prompt` / `build_right_prompt` 跳过空 segment；`functions/icons.zsh` 顶行用 `typeset -AH` 代替 `typeset -gAH` 以兼容 zsh 5.0.x。**用 `scripts/update-vendor.sh` 刷新后需重新合入这些改动。** 另：`p9k.zsh` 勿把多行提示第一行设成黑底黑字，否则在常见终端上几乎看不见。rainbow 风格，整体外观与 p10k preset 接近。
 
 两套主题都假设你装了 MesloLGS NF（仓库的 `fonts/` 已经带）。`zsh/zshrc` 顶部的 P10k instant-prompt 缓存块也加了同样的 zsh 版本守卫，所以 5.0.2 那台不会再看到 "minimum required version is 5.1" 的红字。
 
