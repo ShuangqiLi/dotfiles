@@ -29,9 +29,9 @@ err()   { printf '%serr%s   %s\n' "$c_err" "$c_off" "$*" >&2; }
 run()   { if [[ -n "$DRY_RUN" ]]; then printf '%s+ %s%s\n' "$c_dim" "$*" "$c_off"; else "$@"; fi; }
 
 # --- Step 1: ensure templated, gitignored files exist -----------------------
-if [[ ! -f git/gitconfig.local ]]; then
-  info "Creating git/gitconfig.local from template"
-  run cp git/gitconfig.local.example git/gitconfig.local
+if [[ ! -f local/gitconfig.local ]]; then
+  info "Creating local/gitconfig.local from template"
+  run cp local/gitconfig.local.example local/gitconfig.local
 fi
 
 # --- Step 2: clean broken symlinks at the top level of $HOME ---------------
@@ -82,7 +82,7 @@ link bash/bashrc              "$HOME/.bashrc"                              force
 link zsh/p10k.zsh             "$HOME/.p10k.zsh"
 link zsh/p9k.zsh              "$HOME/.p9k.zsh"
 link git/gitconfig            "$HOME/.gitconfig"
-link git/gitconfig.local      "$HOME/.gitconfig.local"                     force
+link local/gitconfig.local    "$HOME/.gitconfig.local"                     force
 link git/gitignore_global     "$HOME/.gitignore_global"
 link fonts                    "$HOME/.fonts"
 link vscode/settings.json     "$HOME/.config/Code/User/settings.json"
