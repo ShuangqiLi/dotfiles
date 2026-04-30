@@ -133,6 +133,8 @@ Plug '~/.vim/plugins-vendor/nerdtree'
 
 `plug#end()` 会把每个目录加到 `&runtimepath`，所以**完全不需要跑 `PlugInstall`**。
 
+**Vim 版本与 easycomplete**：`vim-easycomplete` 需要较新的 Vim（含 `v:null`、`v:true`/`v:false`、`job`、`timer` 等，约 **Vim 8.0+**）。`vim/vimrc` 在检测到环境不支持时会**自动不加载**该插件，避免在 RHEL 7 等自带 **Vim 7.4** 的机器上整屏 E121/E15；其余插件仍正常加载。若需要 LSP 补全，请在该机安装新版 Vim 后再用。终端光标序列 `&t_SR` 等在旧版上可能不存在，配置里已用 `exists('&t_SR')` 等形式做了探测，避免 E355。
+
 > **离线注意**：`vim-easycomplete` 在 `vim/plugins-vendor/vim-easycomplete/autoload/easycomplete/installer/*.sh` 里有一堆 LSP 服务器（rust-analyzer、jdtls、omnisharp…）的下载脚本，会用 `curl` 联网。在离线机器上不要执行 `:InstallLspServer`；要么提前在有网机器上准备好 LSP 二进制，要么放弃对应语言的补全功能。
 
 ### Prompt 主题：P10k + 老 zsh 自动回退到 P9K
