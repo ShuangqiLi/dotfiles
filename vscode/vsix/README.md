@@ -1,5 +1,6 @@
 # Vendored `.vsix` files
 
-Populate with **`bash scripts/fetch-vscode-vsix.sh`** (from repo root, on a networked machine). See **`../README.md`** for the full offline workflow.
+Files match **`vscode/extensions.txt`** and are listed in **`../EXTENSIONS.md`**.  
+Open VSX packages are valid zip VSIX; the **cpptools** package is taken from the Microsoft Gallery (gzip layer removed) for **linux-x64**.
 
-VSIX files are third-party binaries; keep pins in **`extensions.txt`** aligned with your license / export rules.
+Keep pins and files in sync with your license and export rules.

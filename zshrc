@@ -7,16 +7,28 @@ fi
 
 export PATH=$HOME/.local/bin:/usr/local/bin:$PATH
 
-# Oh My Zsh library (via antidote) reads this before plugins load.
-DISABLE_AUTO_TITLE="true"
+# Repo root (this file is symlinked from the dotfiles checkout). Used to source vendored zsh plugins.
+export DOTFILES="${DOTFILES:-${${(%):-%x}:A:h}}"
 
 ######################################################################
-# antidote — https://antidote.sh
+# Vendored zsh plugins (no plugin manager, no network)
 ######################################################################
-if [[ -r ~/.antidote/antidote.zsh && -r ~/.zsh_plugins.txt ]]; then
-  source ~/.antidote/antidote.zsh
-  antidote load ~/.zsh_plugins.txt
-fi
+export ZSH="$DOTFILES/zsh/vendor/ohmyzsh"
+ZSH_DISABLE_COMPFIX=true
+DISABLE_AUTO_TITLE="true"
+ZSH_THEME=""
+plugins=(git)
+[[ -r "$ZSH/oh-my-zsh.sh" ]] && source "$ZSH/oh-my-zsh.sh"
+
+[[ -r "$DOTFILES/zsh/vendor/zsh-autosuggestions/zsh-autosuggestions.plugin.zsh" ]] && \
+  source "$DOTFILES/zsh/vendor/zsh-autosuggestions/zsh-autosuggestions.plugin.zsh"
+
+[[ -r "$DOTFILES/zsh/vendor/powerlevel10k/powerlevel10k.zsh-theme" ]] && \
+  source "$DOTFILES/zsh/vendor/powerlevel10k/powerlevel10k.zsh-theme"
+
+# zsh-syntax-highlighting must be sourced last.
+[[ -r "$DOTFILES/zsh/vendor/zsh-syntax-highlighting/zsh-syntax-highlighting.plugin.zsh" ]] && \
+  source "$DOTFILES/zsh/vendor/zsh-syntax-highlighting/zsh-syntax-highlighting.plugin.zsh"
 
 bindkey '^ ' autosuggest-accept
 bindkey '^\n' autosuggest-execute
@@ -25,6 +37,12 @@ bindkey '^\n' autosuggest-execute
 # User configuration
 ######################################################################
 export TERM="xterm-256color"
+
+# History
+HISTFILE="$HOME/.zsh_history"
+HISTSIZE=10000
+SAVEHIST=10000
+setopt SHARE_HISTORY HIST_IGNORE_DUPS HIST_IGNORE_SPACE HIST_FIND_NO_DUPS HIST_REDUCE_BLANKS
 
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
@@ -64,7 +82,7 @@ alias gb='git branch'
 alias gp='git pull'
 alias gf='git fetch'
 alias gsu='git submodule update --recursive --init'
-alias rg='rg --no-heading'
+(( $+commands[rg] )) && alias rg='rg --no-heading'
 
 fg() {
   if [[ $# -eq 1 && $1 = - ]]; then
@@ -82,37 +100,6 @@ Cscope() {
 }
 
 alias go='cd `git rev-parse --show-toplevel`'
-
-######################################################################
-# fzf
-######################################################################
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
-
-# Optional preview tools: rougify, highlight, coderay (install separately for rich previews).
-alias fls='fzf --preview '"'"'[[ $(file --mime {}) =~ binary ]] && echo {} is a binary file || (rougify {} || highlight -O ansi -l {} || coderay {} || cat {}) 2> /dev/null | head -500'"'"
-
-fd() {
-  local dir
-  dir=$(find ${1:-.} -path '*/\.*' -prune \
-                  -o -type d -print 2> /dev/null | fzf +m) &&
-  cd "$dir"
-}
-
-cf() {
-  if ! command -v locate >/dev/null 2>&1; then
-    echo "cf: locate not found; install plocate/mlocate and refresh the DB (e.g. updatedb)" >&2
-    return 1
-  fi
-  local file
-  file="$(locate -Ai -0 $@ | grep -z -vE '~$' | fzf --read0 -0 -1)"
-  if [[ -n $file ]]; then
-    if [[ -d $file ]]; then
-      cd -- $file
-    else
-      cd -- ${file:h}
-    fi
-  fi
-}
 
 # Machine-specific env (not in git): see local/env.zsh.example
 _dotfiles_dir="${0:A:h}"

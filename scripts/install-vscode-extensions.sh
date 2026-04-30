@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Install VS Code extensions: prefers vendored vscode/vsix/*.vsix (offline); else marketplace from extensions.txt.
+# Install VS Code extensions from vendored vscode/vsix/*.vsix only (no Marketplace).
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 LIST="$ROOT/vscode/extensions.txt"
@@ -49,26 +49,11 @@ install_vsix_ordered() {
 
 shopt -s nullglob
 vsix_any=("$VSIX_DIR"/*.vsix)
-if ((${#vsix_any[@]} > 0)); then
-  echo "Installing from vendored VSIX (offline) in $VSIX_DIR"
-  install_vsix_ordered
-  echo "VS Code extensions installed from VSIX."
-  exit 0
-fi
-
-if [[ -n "${VSCODE_OFFLINE_ONLY:-}" ]]; then
-  echo "VSCODE_OFFLINE_ONLY=1 but no files in $VSIX_DIR. Run scripts/fetch-vscode-vsix.sh on a connected machine and commit the .vsix files." >&2
+if ((${#vsix_any[@]} == 0)); then
+  echo "No .vsix files in $VSIX_DIR. Vendor extensions matching vscode/extensions.txt (see vscode/EXTENSIONS.md)." >&2
   exit 1
 fi
 
-echo "No VSIX in $VSIX_DIR; installing from Marketplace (needs network) per extensions.txt"
-while IFS= read -r line || [[ -n "$line" ]]; do
-  line="${line%%#*}"
-  line="${line%"${line##*[![:space:]]}"}"
-  line="${line#"${line%%[![:space:]]*}"}"
-  [[ -z "$line" ]] && continue
-  echo "code --install-extension $line"
-  "$CODE_BIN" --install-extension "$line" --force
-done < "$LIST"
-
-echo "VS Code extensions installed from Marketplace."
+echo "Installing from vendored VSIX in $VSIX_DIR"
+install_vsix_ordered
+echo "VS Code extensions installed from VSIX."

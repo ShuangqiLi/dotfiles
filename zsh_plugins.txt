@@ -1,9 +1,0 @@
-# Antidote plugin list (https://antidote.sh)
-# Order: Oh My Zsh base → plugins → autosuggest → theme → syntax highlighting last
-
-getantidote/use-omz
-ohmyzsh/ohmyzsh path:lib
-ohmyzsh/ohmyzsh path:plugins/git
-zsh-users/zsh-autosuggestions
-romkatv/powerlevel10k
-zsh-users/zsh-syntax-highlighting

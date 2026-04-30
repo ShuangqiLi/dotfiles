@@ -1,22 +1,230 @@
 {
-  // Dotfiles-managed VS Code settings (target: see vscode/target-version.txt)
-  "window.titleBarStyle": "custom",
-  "editor.fontSize": 14,
+  // Dotfiles-managed VS Code user settings (target editor: see vscode/target-version.txt).
+  // Machine-specific secrets (e.g. Anthropic tokens, SSH IPs) MUST stay out of this file.
+  // Linked to ~/.config/Code/User/settings.json on Linux/WSL (native Linux VS Code only).
+  /* --- Vim --- */
+  "vim.leader": "<space>",
+  "vim.useSystemClipboard": true,
+  "vim.hlsearch": true,
+  "vim.incsearch": true,
+  "vim.easymotion": true,
+  // "vim.useCtrlKeys": true,
+  "vim.handleKeys": {
+    "<C-c>": false,
+    "<C-v>": true,
+    "<C-a>": true,
+    "<C-x>": true,
+    "<C-f>": false,
+    "<C-p>": false,
+    "<C-b>": false
+  },
+  "vim.insertModeKeyBindings": [
+    {
+      "before": [
+        "j",
+        "j"
+      ],
+      "after": [
+        "<Esc>"
+      ]
+    }
+  ],
+  "vim.normalModeKeyBindingsNonRecursive": [
+    {
+      "before": [
+        "j"
+      ],
+      "after": [
+        "j",
+        "z",
+        "z"
+      ]
+    },
+    {
+      "before": [
+        "k"
+      ],
+      "after": [
+        "k",
+        "z",
+        "z"
+      ]
+    },
+    {
+      "before": [
+        "<leader>",
+        "<CR>"
+      ],
+      "commands": [
+        ":nohl"
+      ]
+    },
+    {
+      "before": [
+        "<leader>",
+        "<leader>"
+      ],
+      "commands": [
+        "workbench.action.quickOpen"
+      ]
+    },
+    {
+      "before": [
+        "<C-h>"
+      ],
+      "commands": [
+        "workbench.action.navigateLeft"
+      ]
+    },
+    {
+      "before": [
+        "<C-l>"
+      ],
+      "commands": [
+        "workbench.action.navigateRight"
+      ]
+    },
+    {
+      "before": [
+        "<C-j>"
+      ],
+      "commands": [
+        "workbench.action.navigateDown"
+      ]
+    },
+    {
+      "before": [
+        "<C-k>"
+      ],
+      "commands": [
+        "workbench.action.navigateUp"
+      ]
+    },
+    {
+      "before": [
+        "<C-Left>"
+      ],
+      "commands": [
+        "workbench.action.decreaseViewWidth"
+      ]
+    },
+    {
+      "before": [
+        "<C-Right>"
+      ],
+      "commands": [
+        "workbench.action.increaseViewWidth"
+      ]
+    },
+    {
+      "before": [
+        "<C-Up>"
+      ],
+      "commands": [
+        "workbench.action.decreaseViewHeight"
+      ]
+    },
+    {
+      "before": [
+        "<C-Down>"
+      ],
+      "commands": [
+        "workbench.action.increaseViewHeight"
+      ]
+    },
+    {
+      "before": [
+        "<leader>",
+        "a"
+      ],
+      "commands": [
+        "C_Cpp.SwitchHeaderSource"
+      ]
+    },
+    {
+      "before": [
+        "<leader>",
+        "q"
+      ],
+      "commands": [
+        "workbench.action.closeActiveEditor"
+      ]
+    }
+  ],
+  /* --- C/C++ --- */
+  "C_Cpp.intelliSenseEngine": "default",
+  "C_Cpp.clang_format_fallbackStyle": "Google",
+  "C_Cpp.errorSquiggles": "enabled",
+  /* --- CMake --- */
+  "cmake.pinnedCommands": [
+    "workbench.action.tasks.configureTaskRunner",
+    "workbench.action.tasks.runTask"
+  ],
+  /* --- Python --- */
+  "python.languageServer": "Pylance",
+  "python.analysis.typeCheckingMode": "basic",
+  /* --- Editor --- */
+  "editor.fontSize": 16,
+  "editor.fontWeight": "normal",
   "editor.fontFamily": "'MesloLGS NF', 'JetBrains Mono', 'Fira Code', Consolas, monospace",
-  "editor.tabSize": 4,
+  "editor.lineHeight": 0,
   "editor.insertSpaces": true,
-  "editor.formatOnSave": false,
+  "editor.tabSize": 4,
+  "editor.renderWhitespace": "selection",
+  "editor.guides.bracketPairs": false,
+  "editor.guides.bracketPairsHorizontal": false,
+  "editor.guides.indentation": false,
+  "editor.formatOnSave": true,
+  "editor.formatOnPaste": true,
+  "editor.bracketPairColorization.enabled": true,
+  "editor.overviewRulerBorder": false,
+  "editor.scrollbar.vertical": "auto",
+  "editor.scrollbar.horizontal": "hidden",
+  "editor.smoothScrolling": true,
+  "editor.cursorBlinking": "smooth",
+  "editor.renderLineHighlight": "gutter",
   "editor.minimap.enabled": true,
+  "editor.minimap.autohide": "scroll",
+  "editor.copyWithSyntaxHighlighting": false,
   "editor.wordWrap": "off",
+  /* --- Files --- */
+  "files.autoSave": "onFocusChange",
+  "files.trimFinalNewlines": true,
   "files.trimTrailingWhitespace": true,
   "files.insertFinalNewline": true,
   "files.eol": "\n",
-  "terminal.integrated.fontSize": 14,
-  "terminal.integrated.fontFamily": "'MesloLGS NF', monospace",
-  "workbench.colorTheme": "Default Dark Modern",
-  "git.autofetch": true,
+  /* --- Git --- */
+  "git.autofetch": false,
   "git.confirmSync": false,
+  "gitlens.hovers.enabled": false,
+  "gitlens.ai.model": "vscode",
+  "gitlens.ai.vscode.model": "copilot:gpt-4.1",
+  /* --- Workbench / window --- */
+  "window.titleBarStyle": "custom",
+  "workbench.colorTheme": "Default Dark Modern",
+  "workbench.startupEditor": "none",
+  "workbench.editor.empty.hint": "hidden",
+  "workbench.editor.enablePreview": false,
+  "workbench.editor.enablePreviewFromQuickOpen": false,
+  "workbench.editor.limit.enabled": true,
+  "workbench.editor.limit.value": 10,
+  "workbench.editor.limit.perEditorGroup": true,
+  "workbench.editor.scrollToSwitchTabs": true,
+  /* --- Terminal --- */
+  "terminal.integrated.fontSize": 16,
+  "terminal.integrated.fontFamily": "'MesloLGS NF', monospace",
+  "terminal.integrated.scrollback": 10000,
+  "terminal.integrated.cursorBlinking": true,
+  /* --- Misc --- */
   "explorer.confirmDelete": true,
   "extensions.autoCheckUpdates": false,
-  "extensions.autoUpdate": false
+  "extensions.autoUpdate": false,
+  "security.workspace.trust.untrustedFiles": "open",
+  "update.showReleaseNotes": false,
+  "debug.onTaskErrors": "abort",
+  "makefile.configureOnOpen": true,
+  "[jsonc]": {
+    "editor.defaultFormatter": "vscode.json-language-features"
+  },
+  "chat.viewSessions.orientation": "stacked"
 }

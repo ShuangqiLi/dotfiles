@@ -1,25 +1,23 @@
-# VS Code 1.85.2 — one id@version per line (comments and blank lines ok).
-# Re-export from a live install:  code --list-extensions --show-versions
-# Vendored VSIX:  bash scripts/fetch-vscode-vsix.sh
-# If Market returns 404, open the extension’s “Version History” and pick a 1.85‑era build.
+# VS Code 1.85.2 — pins verified against engines.vscode (zh-hans + python from Open VSX; cpptools from Microsoft Gallery).
+# Filenames: vscode/vsix/{id}-{version}.vsix
 
-# —— UI / locale ——
-MS-CEINTL.vscode-language-pack-zh-hans@1.85.2024021418
+# —— UI / locale (Open VSX) ——
+MS-CEINTL.vscode-language-pack-zh-hans@1.85.0
 
 # —— Python / C++ ——
-ms-python.python@2024.0.3
+ms-python.python@2023.20.0
 ms-vscode.cpptools@1.18.5
 
-# —— Git ——
+# —— Git (Open VSX) ——
 eamodio.gitlens@14.6.1
 
-# —— Editor / formatting ——
+# —— Editor / formatting (Open VSX) ——
 editorconfig.editorconfig@0.16.6
 esbenp.prettier-vscode@10.4.0
 dbaeumer.vscode-eslint@2.4.4
 
-# —— Modal editing / text tools ——
-vscodevim.vim@1.27.3
+# —— Modal editing / text tools (Open VSX; vim 1.27.2 is last 1.27.x on Open VSX) ——
+vscodevim.vim@1.27.2
 twxs.cmake@0.0.17
 earshinov.filter-lines@1.1.0
 yzhang.markdown-all-in-one@3.5.1

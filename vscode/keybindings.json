@@ -1,1 +1,28 @@
-[]
+// Place your key bindings in this file to override the defaults
+[
+    {
+        "key": "ctrl+v",
+        "command": "editor.action.clipboardPasteAction",
+        "when": "editorTextFocus && vim.active && vim.mode == 'Insert'"
+    },
+    {
+        "key": "ctrl+x",
+        "command": "editor.action.clipboardCutAction",
+        "when": "editorTextFocus && vim.active && vim.mode == 'Insert'"
+    },
+    {
+        "key": "ctrl+c",
+        "command": "editor.action.clipboardCopyAction",
+        "when": "editorTextFocus && vim.active"
+    },
+    {
+        "key": "ctrl+a",
+        "command": "editor.action.selectAll",
+        "when": "editorTextFocus && vim.active && vim.mode == 'Insert'"
+    },
+    {
+        "key": "ctrl+z",
+        "command": "undo",
+        "when": "editorTextFocus && vim.active"
+    }
+]

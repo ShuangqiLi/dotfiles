@@ -3,9 +3,9 @@
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""
 syntax on
 set nu
-set tabstop=4
-set softtabstop=4
-set shiftwidth=4
+set tabstop=2
+set softtabstop=2
+set shiftwidth=2
 set expandtab
 set autoindent
 set smartindent
@@ -185,15 +185,19 @@ nmap <leader>i :cs find i <C-R>=expand("<cfile>")<CR><CR>
 " => Plugin (vim-plug — autoload/plug.vim ships with this dotfiles vim dir)
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""
 set nocompatible
+" Plugins ship as git submodules under ~/.vim/plugins-vendor (no runtime git clone).
 call plug#begin('~/.cache/vim/plugged')
-Plug 'preservim/nerdtree'
-Plug 'jayli/vim-easycomplete'
-Plug 'mbbill/undotree'
-Plug 'preservim/tagbar'
-Plug 'itchyny/lightline.vim'
-Plug 'tpope/vim-fugitive'
-Plug 'Kocha/vim-systemc'
-Plug 'vhda/verilog_systemverilog.vim'
+Plug '~/.vim/plugins-vendor/nerdtree'
+Plug '~/.vim/plugins-vendor/vim-easycomplete'
+Plug '~/.vim/plugins-vendor/undotree'
+Plug '~/.vim/plugins-vendor/tagbar'
+Plug '~/.vim/plugins-vendor/lightline.vim'
+Plug '~/.vim/plugins-vendor/vim-fugitive'
+Plug '~/.vim/plugins-vendor/vim-systemc'
+Plug '~/.vim/plugins-vendor/verilog_systemverilog.vim'
+Plug '~/.vim/plugins-vendor/cecutil'
+Plug '~/.vim/plugins-vendor/AnsiEsc.vim'
+Plug '~/.vim/plugins-vendor/a.vim'
 call plug#end()
 
 let g:NERDTreeMinimalUI = 1
@@ -243,8 +247,6 @@ nnoremap gb :BackToOriginalBuffer<CR>
 if has("autocmd")
   " cursor stay at last exit when open
   au BufReadPost * if line("'\"") > 1 && line("'\"")<=line("$") | exe "normal! g'\"" | endif
-  " change dir when enter vim,same as autochdir
-  au VimEnter * exec ":cd " . expand("%:p:h")
   " remove white-space EOL
   au BufWritePre * %s/\s\+$//e
   " change quickfix window position

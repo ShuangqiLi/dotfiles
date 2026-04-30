@@ -1,29 +1,28 @@
 # Dotfiles
 
-Managed with [Dotbot](https://github.com/anishathalye/dotbot/). Zsh plugins use [Antidote](https://github.com/mattmc3/antidote); Vim plugins use [vim-plug](https://github.com/junegunn/vim-plug).
+Managed with [Dotbot](https://github.com/anishathalye/dotbot/). Zsh plugins are vendored as git submodules under `zsh/vendor/` and sourced directly from `zshrc` (no plugin manager). Vim plugins use [vim-plug](https://github.com/junegunn/vim-plug) over local submodules.
 
 **Committed content is meant to be generic (“common”)**. Per-machine secrets and environment live in **gitignored** files (see below).
 
 ## Prerequisites
 
-- **Git**, **Bash**, **Python 3** (for Dotbot)
+- **Git**, **Bash**, **Python 3** (for Dotbot). Prefer **`git clone --recurse-submodules`** so Zsh plugins (`zsh/vendor/`), Vim plugins (`vim/plugins-vendor/`), and Dotbot are present without extra downloads.
 - **Zsh** as your login shell (optional but expected by this config)
-- **curl** or network access for submodules, Vim plugins, and **optional** Meslo download (skipped when TTFs are already in `fonts/`)
-- **Build toolchain** for [fzf](https://github.com/junegunn/fzf) if you use the bundled `fzf/install` step (see fzf docs)
-- **VS Code** (optional): `code` CLI in `PATH`. For **offline** targets, run **`scripts/fetch-vscode-vsix.sh`** on a connected machine and **commit `vscode/vsix/*.vsix`** so `./install` never hits the Marketplace. See **`vscode/README.md`**. Use `SKIP_VSCODE_EXTENSIONS=1` to skip the step.
+- **Network is not required at install time** for Meslo fonts (vendored under `fonts/`), Vim plugins (git submodules), or VS Code extensions (vendored `vscode/vsix/*.vsix`).
+- **VS Code 1.85.2** (optional): `code` CLI in `PATH`. Extensions install **only** from vendored **`vscode/vsix/*.vsix`** (see `vscode/EXTENSIONS.md`). Use `SKIP_VSCODE_EXTENSIONS=1` to skip the step.
 
 ## Install
 
 1. Clone this repository.
 2. Run `./install` (idempotent; safe to run again).
 
-**Fonts:** MesloLGS NF **can live in git** (see `fonts/README.md` + `MesloLGS NF License.txt`). After you add the four `*.ttf` once, `./install` skips downloading them. If download still fails on a fresh machine, use `SKIP_MESLO_FONTS=1 ./install` or copy TTFs in by hand.
+**Fonts:** MesloLGS NF **are committed** under `fonts/` (see `fonts/README.md`). `./install` only verifies they exist; no download.
 
-**Fully air-gapped hosts:** VS Code extensions are covered if you **vendor `vscode/vsix/*.vsix`** (see `vscode/README.md`). Other steps may still expect network the first time (e.g. **Git submodules**, **vim `PlugInstall`**, **Antidote** cloning plugins when you open zsh, **fzf** build). For a sealed environment, vendor those artifacts too or set skips (`SKIP_MESLO_FONTS`, `SKIP_VSCODE_EXTENSIONS`, etc.) and pre-populate caches as needed.
+**Fully air-gapped hosts:** Use **`git clone --recurse-submodules`**. Zsh plugins live under **`zsh/vendor/`**, Vim under **`vim/plugins-vendor/`**, VS Code extensions under **`vscode/vsix/`** — no network during `./install` or first zsh start for those layers.
 
 If you already have a `~/.bashrc` you care about, back it up first: Dotbot links `~/.bashrc` to this repo’s `bashrc` with `force: true`.
 
-The `install` script runs `git submodule update --init --recursive` **before** Dotbot, so paths like `antidote/` exist before symlinks are created.
+The `install` script runs `git submodule update --init --recursive` **before** Dotbot, so vendored plugin directories exist before symlinks are created.
 
 ### Common vs local (not pushed)
 
@@ -49,6 +48,8 @@ Never commit **`gitconfig.local`** or **`local/env.zsh`**.
 
 Plugin install uses `vim -E -s … PlugInstall --sync`. If this fails without a TTY, run manually: `vim +PlugInstall +qall`.
 
+> **Air-gapped note**: `vim-easycomplete` ships per-language installer scripts under `vim/plugins-vendor/vim-easycomplete/autoload/easycomplete/installer/*.sh` that download LSP servers (rust-analyzer, jdtls, omnisharp, …) over `curl`. Don't run `:InstallLspServer` on offline hosts; pre-stage the servers manually or skip those completion features.
+
 ## Fonts and Powerlevel10k (no garbled icons)
 
 See **`fonts/README.md`** for MesloLGS NF, what is committed vs downloaded, and **server vs Cursor/VS Code** font setup.
@@ -64,16 +65,11 @@ Short version for the IDE: in **User** settings JSON on the machine where Cursor
 
 See also [Powerlevel10k fonts](https://github.com/romkatv/powerlevel10k#fonts).
 
-### Optional tools
-
-- **fzf** preview alias `fls`: nicer previews if `rougify`, `highlight`, or `coderay` are installed.
-- **`cf`**: requires `locate` (e.g. `plocate`) and an up-to-date database (`updatedb` / `plocate-build`).
-
 ## Layout
 
 - `install` / `install.conf.yaml` — Dotbot entrypoints
-- `zshrc`, `zsh_plugins.txt` — Zsh + Antidote + Powerlevel10k
-- `vimrc`, `vim/autoload/plug.vim` — Vim + vim-plug (plugins under `~/.cache/vim/plugged`)
+- `zshrc`, `zsh/vendor/*` — Zsh: Oh My Zsh + zsh-autosuggestions + Powerlevel10k + zsh-syntax-highlighting (sourced directly via `$DOTFILES`)
+- `vimrc`, `vim/autoload/plug.vim`, `vim/plugins-vendor/*` — Vim + vim-plug (**plugins are git submodules**, wired via local `Plug` paths)
 - `fonts/` — Meslo via script; see `fonts/README.md`
 - `local/` — optional per-machine `env.zsh`; see `local/README.md`
 - `vscode/` — VS Code `settings.json`, `keybindings.json`, pinned `extensions.txt` (target version in `vscode/target-version.txt`); see `vscode/README.md`
@@ -81,6 +77,5 @@ See also [Powerlevel10k fonts](https://github.com/romkatv/powerlevel10k#fonts).
 ## References
 
 - [Dotbot documentation](https://github.com/anishathalye/dotbot/)
-- [Antidote](https://antidote.sh)
 - [vim-plug](https://github.com/junegunn/vim-plug/wiki)
 - [Powerlevel10k fonts](https://github.com/romkatv/powerlevel10k#fonts)

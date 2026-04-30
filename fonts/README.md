@@ -20,7 +20,7 @@ git commit -m "Add MesloLGS NF fonts"
 
 ## `./install` behavior
 
-`scripts/install-meslo-fonts.sh` **does not delete** existing valid TTFs. If all four files are already present and large enough, it **skips** the network. To force re-download: `MESLO_FONT_REDOWNLOAD=1 bash scripts/install-meslo-fonts.sh`.
+`scripts/install-meslo-fonts.sh` **does not use the network**. It checks that the four TTFs are present under `fonts/` (they should come from git). To copy from another directory on the machine: `MESLO_FONT_SOURCE_DIR=/path/to/fonts bash scripts/install-meslo-fonts.sh`.
 
 To skip the step entirely (e.g. CI): `SKIP_MESLO_FONTS=1 ./install`.
 
