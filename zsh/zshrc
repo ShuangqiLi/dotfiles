@@ -56,24 +56,29 @@ else
   fi
 
   # If LEFT/RIGHT got set as an empty *scalar*, Powerlevel9k's `defined` skips defaults but the theme
-  # iterates one empty segment → `command not found: prompt_`. Drop bogus values / stray "" array elems.
+  # iterates one empty segment → `command not found: prompt_`. Unset non-arrays so defaults / fallbacks apply.
   if (( ${+POWERLEVEL9K_LEFT_PROMPT_ELEMENTS} )) && [[ ${(t)POWERLEVEL9K_LEFT_PROMPT_ELEMENTS} != array* ]]; then
     unset POWERLEVEL9K_LEFT_PROMPT_ELEMENTS
   fi
   if (( ${+POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS} )) && [[ ${(t)POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS} != array* ]]; then
     unset POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS
   fi
-  if (( ${+POWERLEVEL9K_LEFT_PROMPT_ELEMENTS} )) && [[ ${(t)POWERLEVEL9K_LEFT_PROMPT_ELEMENTS} == array* ]]; then
-    POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(${POWERLEVEL9K_LEFT_PROMPT_ELEMENTS[@]:#})
-    (( ${#POWERLEVEL9K_LEFT_PROMPT_ELEMENTS[@]} )) || unset POWERLEVEL9K_LEFT_PROMPT_ELEMENTS
+
+  # If segment arrays are still missing or empty (old zsh / bad env), force sane defaults so the prompt is not blank.
+  if (( ! ${+POWERLEVEL9K_LEFT_PROMPT_ELEMENTS} )) || [[ ${(t)POWERLEVEL9K_LEFT_PROMPT_ELEMENTS} != array* ]] || (( ${#POWERLEVEL9K_LEFT_PROMPT_ELEMENTS[@]} == 0 )); then
+    typeset -a POWERLEVEL9K_LEFT_PROMPT_ELEMENTS
+    POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(context dir vcs)
   fi
-  if (( ${+POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS} )) && [[ ${(t)POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS} == array* ]]; then
-    POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(${POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS[@]:#})
-    (( ${#POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS[@]} )) || unset POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS
+  if (( ! ${+POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS} )) || [[ ${(t)POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS} != array* ]] || (( ${#POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS[@]} == 0 )); then
+    typeset -a POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS
+    POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(status root_indicator background_jobs history time)
   fi
 
   [[ -r "$DOTFILES/zsh/vendor/powerlevel9k/powerlevel9k.zsh-theme" ]] && \
     source "$DOTFILES/zsh/vendor/powerlevel9k/powerlevel9k.zsh-theme"
+
+  # Oh My Zsh / other hooks sometimes toggle this; Powerlevel9k needs command substitution in PROMPT.
+  setopt prompt_subst 2>/dev/null || true
 fi
 
 # zsh-syntax-highlighting must be sourced last.

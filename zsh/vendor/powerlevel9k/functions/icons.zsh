@@ -12,7 +12,8 @@
 # `compatible`. This shows all icons in regular symbols.
 
 # Initialize the icon list according to the user's `POWERLEVEL9K_MODE`.
-typeset -gAH icons
+# Top-level sourced file: omit `typeset -g` for zsh 5.0.x (same class of issues as ~/.p9k.zsh).
+typeset -AH icons
 () { # add scope to protect the users locale and not overwrite LC_CTYPE!
 case $POWERLEVEL9K_MODE in
   'flat'|'awesome-patched')

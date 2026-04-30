@@ -36,8 +36,10 @@ POWERLEVEL9K_LEFT_SUBSEGMENT_SEPARATOR=$'\xee\x82\xb1'
 #   U+E0B3
 POWERLEVEL9K_RIGHT_SUBSEGMENT_SEPARATOR=$'\xee\x82\xb3'
 
-POWERLEVEL9K_MULTILINE_FIRST_PROMPT_PREFIX='%K{black}%F{black} '
-#   U+276F ❯
+# Do NOT set MULTILINE_FIRST to black-on-black (%K{black}%F{black}) — it is invisible on
+# typical terminals; combined with any segment glitch it looks like an "empty" prompt.
+# Leave unset so print_icon uses the theme's MULTILINE_FIRST_PROMPT_PREFIX (e.g. ╭─).
+# Optional last-line chevron (visible):
 POWERLEVEL9K_MULTILINE_LAST_PROMPT_PREFIX=$'%F{cyan}\xe2\x9d\xaf%f '
 
 # Segment lists — single-line arrays only: zsh 5.0.x multiline (…) can inject ""
@@ -45,9 +47,6 @@ POWERLEVEL9K_MULTILINE_LAST_PROMPT_PREFIX=$'%F{cyan}\xe2\x9d\xaf%f '
 # Only use segments that exist in zsh/vendor/powerlevel9k (this snapshot has no terraform).
 POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(dir vcs)
 POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(status command_execution_time background_jobs virtualenv anaconda pyenv nvm kubecontext aws time)
-
-POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(${POWERLEVEL9K_LEFT_PROMPT_ELEMENTS[@]:#})
-POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(${POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS[@]:#})
 
 # Directory: blue background, dark foreground, truncate middle to keep prompt short.
 POWERLEVEL9K_SHORTEN_DIR_LENGTH=3
