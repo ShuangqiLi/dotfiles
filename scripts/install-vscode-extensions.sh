@@ -27,9 +27,11 @@ if [[ -z "${CODE_BIN:-}" ]]; then
 fi
 
 # Snapshot already-installed extensions so we can skip ones already at the
-# pinned version (saves ~25s per `./install` invocation). Keys are lower-cased
-# IDs because `code --list-extensions` may differ in case from extensions.txt.
+# pinned version (saves ~25s per `./install` invocation). Keys are stored both
+# under the original case AND lower-cased because `code --list-extensions`
+# may differ in case from extensions.txt.
 declare -A INSTALLED=()
+INSTALLED_COUNT=0
 if installed_raw="$("$CODE_BIN" --list-extensions --show-versions 2>/dev/null)"; then
   while IFS= read -r entry; do
     [[ "$entry" == *@* ]] || continue
@@ -38,7 +40,11 @@ if installed_raw="$("$CODE_BIN" --list-extensions --show-versions 2>/dev/null)";
     INSTALLED["$e_id"]="$e_ver"
     e_lc="$(printf '%s' "$e_id" | tr '[:upper:]' '[:lower:]')"
     INSTALLED["$e_lc"]="$e_ver"
+    INSTALLED_COUNT=$((INSTALLED_COUNT+1))
   done <<<"$installed_raw"
+fi
+if [[ -n "${VSCODE_EXT_DEBUG:-}" ]]; then
+  echo "[debug] bash=$BASH_VERSION  CODE_BIN=$CODE_BIN  installed=$INSTALLED_COUNT" >&2
 fi
 
 install_vsix_ordered() {
@@ -57,13 +63,13 @@ install_vsix_ordered() {
       echo "Missing VSIX (expected): $f" >&2
       return 1
     fi
-    have=""
-    if [[ -v 'INSTALLED[$lc_id]' ]]; then
-      have="${INSTALLED[$lc_id]}"
-    elif [[ -v 'INSTALLED[$id]' ]]; then
-      have="${INSTALLED[$id]}"
-    fi
-    if [[ "$have" == "$ver" ]]; then
+    # Note: ${arr[key]:-} works on bash 4.0+. The previous form
+    # `[[ -v 'arr[$key]' ]]` requires bash 4.3+, so on bash 4.2 (RHEL 7)
+    # it always returned false and we reinstalled every extension on
+    # every run.
+    have="${INSTALLED[$lc_id]:-}"
+    [[ -z "$have" ]] && have="${INSTALLED[$id]:-}"
+    if [[ -n "$have" && "$have" == "$ver" ]]; then
       echo "skip ${id}@${ver} (already installed)"
       skipped=$((skipped+1))
       continue
