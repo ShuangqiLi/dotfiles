@@ -185,7 +185,18 @@ nmap <leader>i :cs find i <C-R>=expand("<cfile>")<CR><CR>
 " => Plugin (vim-plug — autoload/plug.vim ships with this dotfiles vim dir)
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""
 set nocompatible
-" Plugins ship as git submodules under ~/.vim/plugins-vendor (no runtime git clone).
+
+" vim-easycomplete 在 plugin/easycomplete.vim 里才设置 g:env_is_vim；若 rtp 顺序、提前触发
+" CursorMoved、或 easycomplete_default_plugin_init 导致插件脚本提前 finish，autoload 会先引用
+" 这些变量 → E121。先于 vim-plug 定义一份，与插件内逻辑保持一致。
+if !exists('g:env_is_vim')
+  let g:env_is_vim = !has('nvim')
+  let g:env_is_nvim = !!has('nvim')
+  let g:env_is_iterm = !empty($ITERM_PROFILE)
+  let g:env_is_gui = has('termguicolors') && &termguicolors
+endif
+
+" 插件在 ~/.vim/plugins-vendor/ 下随仓库分发（无联网 git clone）。
 call plug#begin('~/.cache/vim/plugged')
 Plug '~/.vim/plugins-vendor/nerdtree'
 Plug '~/.vim/plugins-vendor/vim-easycomplete'
