@@ -37,5 +37,8 @@
   - [mkdir -p ~/.cache/vim/swap ~/.cache/vim/backup ~/.cache/vim/undo ~/.cache/vim/plugged, Creating Vim cache directories]
   - ["bash -c 'if [[ -n \"${SKIP_MESLO_FONTS:-}\" ]]; then echo \"SKIP_MESLO_FONTS=1: skipping Meslo font check\"; else exec bash scripts/install-meslo-fonts.sh; fi'", "Verifying MesloLGS NF fonts (vendored under fonts/)"]
   - [fc-cache -f ~/.fonts, Rebuilding font cache]
-  - [vim -E -s -u ~/.vimrc -c "PlugInstall --sync" -c "qa", Installing Vim plugins with vim-plug]
+  # Vim plugins are vendored as git submodules under vim/plugins-vendor/ and loaded
+  # directly via local `Plug '~/.vim/plugins-vendor/<name>'` paths in vimrc, so
+  # plug#end() puts them on &runtimepath at startup. No `PlugInstall` is needed
+  # (it would only trigger git/job probing that fails on air-gapped hosts).
   - [bash scripts/install-vscode-extensions.sh, Installing pinned VS Code extensions]

@@ -44,9 +44,17 @@ Never commit **`gitconfig.local`** or **`local/env.zsh`**.
 
 `install.conf.yaml` uses `clean: ['~']`, which removes **broken symbolic links** under `$HOME` only. It does not delete ordinary files. See [Dotbot clean](https://github.com/anishathalye/dotbot#clean).
 
-### Vim plugins (non-interactive / CI)
+### Vim plugins
 
-Plugin install uses `vim -E -s … PlugInstall --sync`. If this fails without a TTY, run manually: `vim +PlugInstall +qall`.
+Vim plugins are git submodules under `vim/plugins-vendor/`, loaded by **vim-plug** as local paths (`Plug '~/.vim/plugins-vendor/<name>'`). `plug#end()` puts each one on `&runtimepath` at startup, so **no `PlugInstall` is needed** — the installer does not run it (it would only trigger git/job probing that fails on air-gapped hosts).
+
+Make sure submodules are populated before running `./install`:
+
+```bash
+git clone --recurse-submodules <repo>
+# or, in an existing checkout:
+git submodule update --init --recursive
+```
 
 > **Air-gapped note**: `vim-easycomplete` ships per-language installer scripts under `vim/plugins-vendor/vim-easycomplete/autoload/easycomplete/installer/*.sh` that download LSP servers (rust-analyzer, jdtls, omnisharp, …) over `curl`. Don't run `:InstallLspServer` on offline hosts; pre-stage the servers manually or skip those completion features.
 
