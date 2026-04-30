@@ -1,76 +1,44 @@
 #!/usr/bin/env bash
-# Package this repo (working tree + .git + all populated submodules) into a
-# single tarball that you can sneakernet to an air-gapped machine. Run this
-# on a NETWORK-CONNECTED clone of the repository.
-#
-# Output: $OUT (defaults to ../dotfiles-<sha>-<timestamp>.tar.gz). Transfer it
-# to the offline host, then on that host:
-#
-#     tar -xzf dotfiles-<sha>-<timestamp>.tar.gz -C ~/
-#     mv ~/dotfiles-staging ~/dotfiles    # if NEW=1 was used (see below)
-#     cd ~/dotfiles && ./install
-#
-# Because the tarball includes .git/modules/ and the submodule worktrees, the
-# `git submodule update --init --recursive` that ./install runs becomes a
-# no-op (no network needed).
+# Package this repo into a single tarball you can sneakernet to an air-gapped
+# host. Run on a NETWORK-CONNECTED clone. After flattening all vendored
+# submodules into plain files, there is no submodule machinery to populate on
+# the offline side; `tar -xzf <archive> && cd dotfiles && ./install` is enough.
 #
 # Env knobs:
-#   OUT=/some/path.tar.gz   override the output tarball path
-#   NO_PULL=1               skip `git pull --ff-only` (use whatever is checked out)
-#   NEW=1                   stage into a fresh clone named 'dotfiles-staging'
-#                           in $TMPDIR rather than reusing the current checkout
+#   OUT=/path/to/archive.tar.gz   override the output path
+#   NO_PULL=1                     skip the implicit `git pull --ff-only`
+#   NO_GIT=1                      exclude .git/ from the tarball (much smaller,
+#                                 but loses git log/diff/status on the offline
+#                                 host; ./install still works)
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 NAME="$(basename "$ROOT")"
 
-if [[ -n "${NEW:-}" ]]; then
-  TMP="$(mktemp -d)"
-  trap 'rm -rf "$TMP"' EXIT
-  STAGE="$TMP/dotfiles-staging"
-  url="$(git -C "$ROOT" remote get-url origin)"
-  echo "Cloning fresh from $url ..."
-  git clone --recurse-submodules "$url" "$STAGE"
-  WORK="$STAGE"
-  TAR_NAME="dotfiles-staging"
-else
-  WORK="$ROOT"
-  TAR_NAME="$NAME"
-fi
-
-cd "$WORK"
-
-if [[ -z "${NO_PULL:-}" ]]; then
-  echo "Refreshing $WORK ..."
+cd "$ROOT"
+if [[ -z "${NO_PULL:-}" ]] && git remote get-url origin >/dev/null 2>&1; then
+  echo "Refreshing $ROOT from origin..."
   git fetch --all --prune
   git pull --ff-only
-  git submodule sync --recursive
-  git submodule update --init --recursive
 fi
 
-sha="$(git rev-parse --short HEAD)"
+sha="$(git rev-parse --short HEAD 2>/dev/null || echo nogit)"
 stamp="$(date +%Y%m%d-%H%M%S)"
-OUT="${OUT:-${WORK%/*}/${NAME}-${sha}-${stamp}.tar.gz}"
+OUT="${OUT:-${ROOT%/*}/${NAME}-${sha}-${stamp}.tar.gz}"
 
-# Sanity: complain if any submodule is missing its worktree contents (would
-# silently break the offline ./install).
-missing=0
-while IFS=' ' read -r _ path _; do
-  [[ -n "$path" ]] || continue
-  if [[ ! -e "$WORK/$path/.git" ]]; then
-    echo "MISSING submodule: $path (no .git file inside)" >&2
-    missing=$((missing+1))
-  fi
-done < <(git -C "$WORK" submodule status --recursive)
-if (( missing > 0 )); then
-  echo "Refusing to package: $missing submodules are not populated." >&2
-  exit 1
+cd "$(dirname "$ROOT")"
+
+declare -a TAR_OPTS=()
+if [[ -n "${NO_GIT:-}" ]]; then
+  TAR_OPTS+=(--exclude="$NAME/.git" --exclude="$NAME/.git/*")
+  echo "Packing $NAME (no .git/) -> $OUT"
+else
+  echo "Packing $NAME -> $OUT"
 fi
 
-cd "$(dirname "$WORK")"
-echo "Packing $TAR_NAME -> $OUT"
-tar -czf "$OUT" "$TAR_NAME"
+tar -czf "$OUT" "${TAR_OPTS[@]}" "$NAME"
 size="$(du -h "$OUT" | cut -f1)"
+
 echo
 echo "Done. ${size} written to:"
 echo "  $OUT"
@@ -78,6 +46,4 @@ echo
 echo "On the offline host:"
 echo "  scp/USB '$OUT' there:~/"
 echo "  tar -xzf '$(basename "$OUT")' -C ~/"
-[[ "$TAR_NAME" == "dotfiles-staging" ]] && \
-  echo "  mv ~/dotfiles-staging ~/dotfiles    # rename if you keep it as ~/dotfiles"
-echo "  cd ~/$NAME && ./install               # idempotent, ~9s on no-change runs"
+echo "  cd ~/$NAME && ./install     # idempotent, ~3s on a converged box"
