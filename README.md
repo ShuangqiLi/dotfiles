@@ -20,6 +20,36 @@ Managed with [Dotbot](https://github.com/anishathalye/dotbot/). Zsh plugins are 
 
 **Fully air-gapped hosts:** Use **`git clone --recurse-submodules`**. Zsh plugins live under **`zsh/vendor/`**, Vim under **`vim/plugins-vendor/`**, VS Code extensions under **`vscode/vsix/`** — no network during `./install` or first zsh start for those layers.
 
+### Updating an air-gapped host (sneakernet)
+
+Air-gapped boxes can't `git pull` or fetch new submodules from GitHub. After you push changes from a connected machine (especially when **submodule pointers move** or a **new submodule** is added), use `scripts/package-for-offline.sh` to ship a self-contained tarball:
+
+**On the connected machine** (with network + a clone of this repo):
+
+```bash
+cd ~/dotfiles
+git pull
+scripts/package-for-offline.sh         # add NO_PULL=1 to skip the implicit pull
+# -> writes ../dotfiles-<sha>-<timestamp>.tar.gz
+```
+
+The tarball includes the working tree **plus `.git/` and all `.git/modules/<sub>/`** — that is, the main repo's git db AND every submodule's git db pre-populated. (The script refuses to package if any submodule worktree is missing, so you can't accidentally ship a broken bundle.)
+
+**Transfer** the tarball to the offline host (USB, jump host, `scp`, whatever your environment allows).
+
+**On the air-gapped host:**
+
+```bash
+mv ~/dotfiles ~/dotfiles.bak.$(date +%s)         # back up current checkout
+tar -xzf dotfiles-<sha>-<timestamp>.tar.gz -C ~/ # extracts as ~/dotfiles
+cd ~/dotfiles
+./install
+```
+
+Because the tarball already contains every submodule's git db and worktree at the right SHA, the `git submodule update --init --recursive` that `./install` runs is a no-op — no network. After install, follow-up runs are idempotent (~9s on a converged box).
+
+> **Tip:** If you just want to refresh files without keeping git history, `tar --exclude='.git/*' …` cuts the archive size roughly in half, but the offline host then can't run any git commands locally. Keep `.git/` for `git log`, `git diff`, etc.
+
 If you already have a `~/.bashrc` you care about, back it up first: Dotbot links `~/.bashrc` to this repo’s `bashrc` with `force: true`.
 
 The `install` script runs `git submodule update --init --recursive` **before** Dotbot, so vendored plugin directories exist before symlinks are created.
@@ -90,6 +120,7 @@ See also [Powerlevel10k fonts](https://github.com/romkatv/powerlevel10k#fonts).
 - `fonts/` — Meslo via script; see `fonts/README.md`
 - `local/` — optional per-machine `env.zsh`; see `local/README.md`
 - `vscode/` — VS Code `settings.json`, `keybindings.json`, pinned `extensions.txt` (target version in `vscode/target-version.txt`); see `vscode/README.md`
+- `scripts/package-for-offline.sh` — produce a self-contained tarball (working tree + `.git/modules/*`) for sneakernet to air-gapped hosts; see "Updating an air-gapped host" above
 
 ## References
 
