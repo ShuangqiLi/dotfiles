@@ -9,8 +9,10 @@ fi
 
 export PATH=$HOME/.local/bin:/usr/local/bin:$PATH
 
-# Repo root (this file is symlinked from the dotfiles checkout). Used to source vendored zsh plugins.
-export DOTFILES="${DOTFILES:-${${(%):-%x}:A:h}}"
+# Repo root (this file is symlinked from <dotfiles>/zsh/zshrc). Used to source
+# vendored zsh plugins. ${(%):-%x} expands to the path of THIS file; :A resolves
+# symlinks, :h:h goes up two levels (zsh/zshrc -> zsh -> repo root).
+export DOTFILES="${DOTFILES:-${${(%):-%x}:A:h:h}}"
 
 ######################################################################
 # Vendored zsh plugins (no plugin manager, no network)
@@ -114,6 +116,4 @@ Cscope() {
 alias go='cd `git rev-parse --show-toplevel`'
 
 # Machine-specific env (not in git): see local/env.zsh.example
-_dotfiles_dir="${0:A:h}"
-[[ -f "$_dotfiles_dir/local/env.zsh" ]] && source "$_dotfiles_dir/local/env.zsh"
-unset _dotfiles_dir
+[[ -f "$DOTFILES/local/env.zsh" ]] && source "$DOTFILES/local/env.zsh"

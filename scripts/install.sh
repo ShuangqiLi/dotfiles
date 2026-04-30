@@ -29,9 +29,9 @@ err()   { printf '%serr%s   %s\n' "$c_err" "$c_off" "$*" >&2; }
 run()   { if [[ -n "$DRY_RUN" ]]; then printf '%s+ %s%s\n' "$c_dim" "$*" "$c_off"; else "$@"; fi; }
 
 # --- Step 1: ensure templated, gitignored files exist -----------------------
-if [[ ! -f gitconfig.local ]]; then
-  info "Creating gitconfig.local from template"
-  run cp gitconfig.local.example gitconfig.local
+if [[ ! -f git/gitconfig.local ]]; then
+  info "Creating git/gitconfig.local from template"
+  run cp git/gitconfig.local.example git/gitconfig.local
 fi
 
 # --- Step 2: clean broken symlinks at the top level of $HOME ---------------
@@ -75,15 +75,15 @@ link() {
   ok "$dst -> $abs"
 }
 
-link vimrc                    "$HOME/.vimrc"
+link vim/vimrc                "$HOME/.vimrc"
 link vim                      "$HOME/.vim"
-link zshrc                    "$HOME/.zshrc"
-link bashrc                   "$HOME/.bashrc"                              force
-link p10k.zsh                 "$HOME/.p10k.zsh"
-link p9k.zsh                  "$HOME/.p9k.zsh"
-link gitconfig                "$HOME/.gitconfig"
-link gitconfig.local          "$HOME/.gitconfig.local"                     force
-link gitignore_global         "$HOME/.gitignore_global"
+link zsh/zshrc                "$HOME/.zshrc"
+link bash/bashrc              "$HOME/.bashrc"                              force
+link zsh/p10k.zsh             "$HOME/.p10k.zsh"
+link zsh/p9k.zsh              "$HOME/.p9k.zsh"
+link git/gitconfig            "$HOME/.gitconfig"
+link git/gitconfig.local      "$HOME/.gitconfig.local"                     force
+link git/gitignore_global     "$HOME/.gitignore_global"
 link fonts                    "$HOME/.fonts"
 link vscode/settings.json     "$HOME/.config/Code/User/settings.json"
 link vscode/keybindings.json  "$HOME/.config/Code/User/keybindings.json"

@@ -2,15 +2,35 @@
 
 Self-contained, **offline-first** dotfiles. No plugin manager, no submodules, no external tools at install time — `./install` is a small bash script that symlinks files into `$HOME` and runs a few post-link hooks.
 
-**Committed content is meant to be generic (“common”)**. Per-machine secrets and environment live in **gitignored** files (see below).
+**Committed content is meant to be generic (“common”)**. Per-machine secrets and environment live in **gitignored** files (see [Common vs local](#common-vs-local-not-pushed)).
+
+## Repo layout
+
+The root has only folders plus `install` and `README.md`:
+
+```
+.
+├── install                # bash entrypoint -> scripts/install.sh
+├── README.md
+├── bash/                  # bashrc (hands off to zsh when present)
+├── git/                   # gitconfig, gitignore_global, gitconfig.local{,.example}
+├── zsh/                   # zshrc, p10k.zsh, p9k.zsh, vendor/* (oh-my-zsh, p10k, p9k, …)
+├── vim/                   # vimrc, autoload/plug.vim, plugins-vendor/*
+├── vscode/                # settings.json, keybindings.json, extensions.txt, vsix/
+├── fonts/                 # MesloLGS NF + license
+├── local/                 # gitignored per-machine env.zsh + example template
+└── scripts/               # install.sh, package-for-offline.sh, update-vendor.sh, …
+```
+
+`./install` only links these files into `$HOME` (see the table inside `scripts/install.sh`). Vendor directories under `zsh/vendor/` and `vim/plugins-vendor/` are committed as plain files — no git submodules, no upstream history.
 
 ## Prerequisites
 
 - **Git**, **Bash 4.2+** (RHEL 7 fine), **coreutils**.
 - **Zsh** as your login shell (optional but expected by this config).
 - **Network is not required at install time** for any layer:
-  - **Vim plugins** live under `vim/plugins-vendor/<name>/` as plain files (no submodules, no git history).
-  - **Zsh plugins** live under `zsh/vendor/<name>/` likewise.
+  - **Zsh plugins** live under `zsh/vendor/<name>/` as plain files.
+  - **Vim plugins** live under `vim/plugins-vendor/<name>/` as plain files.
   - **MesloLGS NF fonts** are vendored under `fonts/`.
   - **VS Code 1.85.2 extensions** are vendored as `vscode/vsix/*.vsix`; `code` CLI must be on `PATH` (or set `VSCODE_CLI`). `SKIP_VSCODE_EXTENSIONS=1` skips the step.
 
@@ -24,18 +44,24 @@ cd ~/dotfiles
 
 `./install` delegates to `scripts/install.sh` (a small bash dotbot replacement) which:
 
-1. Creates `gitconfig.local` from `gitconfig.local.example` if it doesn't exist.
+1. Creates `git/gitconfig.local` from `git/gitconfig.local.example` if it doesn't exist.
 2. Removes broken top-level symlinks under `$HOME`.
-3. Symlinks the dotfiles into `$HOME` (`~/.vimrc`, `~/.vim`, `~/.zshrc`, `~/.bashrc`, `~/.p10k.zsh`, `~/.p9k.zsh`, `~/.gitconfig`, `~/.gitconfig.local`, `~/.gitignore_global`, `~/.fonts`, `~/.config/Code/User/settings.json`, `~/.config/Code/User/keybindings.json`).
+3. Symlinks the dotfiles into `$HOME`:
+   - `~/.vimrc` → `vim/vimrc`, `~/.vim` → `vim/`
+   - `~/.zshrc` → `zsh/zshrc`, `~/.p10k.zsh` → `zsh/p10k.zsh`, `~/.p9k.zsh` → `zsh/p9k.zsh`
+   - `~/.bashrc` → `bash/bashrc` (replaces any existing file; back it up first if you care)
+   - `~/.gitconfig` → `git/gitconfig`, `~/.gitconfig.local` → `git/gitconfig.local`, `~/.gitignore_global` → `git/gitignore_global`
+   - `~/.fonts` → `fonts/`
+   - `~/.config/Code/User/settings.json` → `vscode/settings.json`, `keybindings.json` likewise
 4. Verifies vendored Meslo fonts and refreshes `fc-cache`.
 5. Reconciles vendored VSIX with `code --list-extensions` and only re-installs extensions whose pinned version differs.
 
 Knobs:
 
-| Env var                  | Effect |
-|--------------------------|--------|
-| `DRY_RUN=1`              | print actions, do not modify the filesystem |
-| `SKIP_MESLO_FONTS=1`     | skip the font-presence check + `fc-cache` step |
+| Env var                    | Effect |
+|----------------------------|--------|
+| `DRY_RUN=1`                | print actions, do not modify the filesystem |
+| `SKIP_MESLO_FONTS=1`       | skip the font-presence check + `fc-cache` step |
 | `SKIP_VSCODE_EXTENSIONS=1` | skip the VS Code extension step |
 | `VSCODE_CLI=/path/to/code` | override VS Code CLI auto-detect |
 
@@ -43,7 +69,7 @@ Knobs:
 
 ### Updating an air-gapped host (sneakernet)
 
-Air-gapped boxes can't `git pull`. Since the repo is now plain files (no submodules), packaging is just `tar`:
+Air-gapped boxes can't `git pull`. Since the repo is plain files (no submodules), packaging is just `tar`:
 
 **On a connected machine:**
 
@@ -84,19 +110,19 @@ git commit -m "chore(vendor): update <path> to <ref>"
 
 ### Common vs local (not pushed)
 
-| File / directory               | In git? | Purpose |
-|--------------------------------|---------|---------|
-| **`gitconfig.local.example`**  | yes     | Template for Git `user.*` |
-| **`gitconfig.local`**          | **no**  | Real identity; created from the template on first install |
-| **`local/env.zsh.example`**    | yes     | Template for shell env |
-| **`local/env.zsh`**            | **no**  | Proxy, `PATH`, secrets, etc.; sourced at end of `zshrc` |
-| **`fonts/MesloLGS NF *.ttf`**  | yes     | Vendored Meslo + `MesloLGS NF License.txt` (Apache 2.0) |
+| File / directory                  | In git? | Purpose |
+|-----------------------------------|---------|---------|
+| **`git/gitconfig.local.example`** | yes     | Template for Git `user.*` |
+| **`git/gitconfig.local`**         | **no**  | Real identity; created from the template on first install |
+| **`local/env.zsh.example`**       | yes     | Template for shell env |
+| **`local/env.zsh`**               | **no**  | Proxy, `PATH`, secrets, etc.; sourced at end of `zsh/zshrc` |
+| **`fonts/MesloLGS NF *.ttf`**     | yes     | Vendored Meslo + `MesloLGS NF License.txt` (Apache 2.0) |
 
-Never commit **`gitconfig.local`** or **`local/env.zsh`**.
+Never commit **`git/gitconfig.local`** or **`local/env.zsh`**.
 
 ### Vim plugins
 
-Plugins live as plain directories under `vim/plugins-vendor/<name>/` and are loaded by **vim-plug** via local paths in `vimrc`:
+Plugins live as plain directories under `vim/plugins-vendor/<name>/` and are loaded by **vim-plug** via local paths in `vim/vimrc`:
 
 ```vim
 Plug '~/.vim/plugins-vendor/nerdtree'
@@ -109,12 +135,12 @@ Plug '~/.vim/plugins-vendor/nerdtree'
 
 ### Prompt theme: P10k with P9K fallback for old zsh
 
-Powerlevel10k requires `zsh >= 5.1`. If `$ZSH_VERSION` is older (e.g. **5.0.2** on stock RHEL/CentOS 7 where you can't upgrade zsh), `zshrc` automatically falls back to its predecessor **Powerlevel9k**:
+Powerlevel10k requires `zsh >= 5.1`. If `$ZSH_VERSION` is older (e.g. **5.0.2** on stock RHEL/CentOS 7 where you can't upgrade zsh), `zsh/zshrc` automatically falls back to its predecessor **Powerlevel9k**:
 
-- `zsh/vendor/powerlevel10k/` — used on zsh ≥ 5.1, configured via `~/.p10k.zsh`.
-- `zsh/vendor/powerlevel9k/`  — used on zsh < 5.1, configured via `~/.p9k.zsh` (rainbow-style preset roughly matching the P10k preset). Edit `p9k.zsh` in the repo.
+- `zsh/vendor/powerlevel10k/` — used on zsh ≥ 5.1, configured via `zsh/p10k.zsh` (linked as `~/.p10k.zsh`).
+- `zsh/vendor/powerlevel9k/`  — used on zsh < 5.1, configured via `zsh/p9k.zsh` (linked as `~/.p9k.zsh`); rainbow-style preset roughly matching the P10k preset.
 
-Both presets expect MesloLGS NF (vendored under `fonts/`). The Powerlevel10k instant-prompt cache block in `zshrc` is also gated on zsh ≥ 5.1, so the "minimum required version is 5.1" warning will not appear on older hosts.
+Both presets expect MesloLGS NF (vendored under `fonts/`). The Powerlevel10k instant-prompt cache block in `zsh/zshrc` is also gated on zsh ≥ 5.1, so the "minimum required version is 5.1" warning will not appear on older hosts.
 
 ## Fonts and Powerlevel10k (no garbled icons)
 
@@ -130,18 +156,6 @@ Short version for the IDE: in **User** settings JSON on the machine where Cursor
 ```
 
 See also [Powerlevel10k fonts](https://github.com/romkatv/powerlevel10k#fonts).
-
-## Layout
-
-- `install`, `scripts/install.sh` — bash entrypoint + dotbot replacement (no submodules, no Python)
-- `scripts/install-meslo-fonts.sh`, `scripts/install-vscode-extensions.sh` — post-link hooks
-- `scripts/package-for-offline.sh` — sneakernet tarball helper
-- `scripts/update-vendor.sh` — refresh a vendored dir from a git URL (network-connected only)
-- `zshrc`, `zsh/vendor/*` — Zsh: Oh My Zsh + zsh-autosuggestions + Powerlevel10k (with Powerlevel9k fallback on zsh < 5.1) + zsh-syntax-highlighting (sourced directly via `$DOTFILES`)
-- `vimrc`, `vim/autoload/plug.vim`, `vim/plugins-vendor/*` — Vim + vim-plug + vendored plugins (plain dirs)
-- `fonts/` — vendored MesloLGS NF; see `fonts/README.md`
-- `local/` — optional per-machine `env.zsh`; see `local/README.md`
-- `vscode/` — VS Code `settings.json`, `keybindings.json`, pinned `extensions.txt` (target version in `vscode/target-version.txt`); see `vscode/README.md`
 
 ## References
 
