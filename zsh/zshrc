@@ -27,12 +27,19 @@ plugins=(git)
 [[ -r "$DOTFILES/zsh/vendor/zsh-autosuggestions/zsh-autosuggestions.plugin.zsh" ]] && \
   source "$DOTFILES/zsh/vendor/zsh-autosuggestions/zsh-autosuggestions.plugin.zsh"
 
-# Prompt theme: P10k requires zsh >= 5.1; on older zsh (e.g. 5.0.2 on RHEL 7),
-# fall back to its predecessor Powerlevel9k. P9K requires its config to be set
-# BEFORE the theme is sourced, so ~/.p9k.zsh is read first in that branch.
+# Prompt theme.
+# - zsh >= 5.1 → Powerlevel10k.
+# - zsh < 5.1  → use the small built-in fallback in zsh/prompt-fallback.zsh.
+#   Powerlevel9k is *also* shipped under zsh/vendor/powerlevel9k for posterity,
+#   but on zsh 5.0.x it usually renders an empty prompt because its icons.zsh
+#   relies on $'\uXXXX' which fail at parse time without UTF-8 LC_CTYPE.
+#   To opt back into P9K experimentation, export DOTFILES_USE_P9K=1.
 if [[ $ZSH_VERSION == (5.<1->*|<6->.*) ]]; then
   [[ -r "$DOTFILES/zsh/vendor/powerlevel10k/powerlevel10k.zsh-theme" ]] && \
     source "$DOTFILES/zsh/vendor/powerlevel10k/powerlevel10k.zsh-theme"
+elif [[ -z "${DOTFILES_USE_P9K:-}" ]]; then
+  [[ -r "$DOTFILES/zsh/prompt-fallback.zsh" ]] && \
+    source "$DOTFILES/zsh/prompt-fallback.zsh"
 else
   # P9K (and any zsh code using $'\uXXXX' escapes) needs a UTF-8 LC_CTYPE at
   # parse time, otherwise zsh emits "character not in range" and the icon /

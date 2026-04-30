@@ -137,14 +137,15 @@ Plug '~/.vim/plugins-vendor/nerdtree'
 
 > **离线注意**：`vim-easycomplete` 在 `vim/plugins-vendor/vim-easycomplete/autoload/easycomplete/installer/*.sh` 里有一堆 LSP 服务器（rust-analyzer、jdtls、omnisharp…）的下载脚本，会用 `curl` 联网。在离线机器上不要执行 `:InstallLspServer`；要么提前在有网机器上准备好 LSP 二进制，要么放弃对应语言的补全功能。
 
-### Prompt 主题：P10k + 老 zsh 自动回退到 P9K
+### Prompt 主题：P10k + 老 zsh 用纯 zsh 写的回退版
 
-Powerlevel10k 要求 `zsh >= 5.1`。如果 `$ZSH_VERSION` 太老（典型场景：RHEL/CentOS 7 自带 5.0.2，且不允许升级 zsh），`zsh/zshrc` 会自动改用它的前身 **Powerlevel9k**：
+Powerlevel10k 要求 `zsh >= 5.1`。如果 `$ZSH_VERSION` 太老（典型场景：RHEL/CentOS 7 自带 5.0.2，且不允许升级 zsh），`zsh/zshrc` 会改用一个**手写的小 prompt**：
 
 - `zsh/vendor/powerlevel10k/` —— `zsh >= 5.1` 时使用，配置文件 `zsh/p10k.zsh`（链到 `~/.p10k.zsh`）。
-- `zsh/vendor/powerlevel9k/`  —— `zsh < 5.1` 时使用，配置文件 `zsh/p9k.zsh`（链到 `~/.p9k.zsh`；未链接时 `zshrc` 会从 `$DOTFILES/zsh/p9k.zsh` 直接加载）。右侧 prompt 段仅包含当前 vendor 快照里存在的 segment（本仓库内的 P9K 无 `terraform` 段）。对 vendored Powerlevel9k 做了小补丁：`powerlevel9k.zsh-theme` 里在 `build_left_prompt` / `build_right_prompt` 跳过空 segment；`functions/icons.zsh` 顶行用 `typeset -AH` 代替 `typeset -gAH` 以兼容 zsh 5.0.x。**用 `scripts/update-vendor.sh` 刷新后需重新合入这些改动。** 另：`p9k.zsh` 勿把多行提示第一行设成黑底黑字，否则在常见终端上几乎看不见。rainbow 风格，整体外观与 p10k preset 接近。
+- `zsh/prompt-fallback.zsh`  —— `zsh < 5.1` 时默认使用。基于 `vcs_info` + 普通 zsh prompt 转义；两行布局：第一行 `user@host  cwd  (git-branch±)` + 右侧 `[exit] HH:MM:SS`，第二行光标前 `❯`（成功为绿色，失败为红色）。**不依赖** nerd font / UTF-8 locale，所以即便 `LANG=C` 也是可见的。
+- `zsh/vendor/powerlevel9k/` 仍然随仓库分发，但**不再默认加载**——它的 `functions/icons.zsh` 大量使用 `$'\uXXXX'` 转义，在 zsh 5.0.x + 非 UTF-8 locale 下解析阶段就会被截断为空，最终图标 / 分隔符 / 颜色全部丢失，prompt 看起来像“空”。如果你想再尝试 P9K，导出 `DOTFILES_USE_P9K=1` 后启动 zsh，会沿用旧的 `zsh/p9k.zsh` + 消毒逻辑。
 
-两套主题都假设你装了 MesloLGS NF（仓库的 `fonts/` 已经带）。`zsh/zshrc` 顶部的 P10k instant-prompt 缓存块也加了同样的 zsh 版本守卫，所以 5.0.2 那台不会再看到 "minimum required version is 5.1" 的红字。
+两套主要主题（P10k / fallback）都不强求 nerd font；只有 P10k 默认那套图标体验需要 MesloLGS NF（仓库 `fonts/` 已经带）。`zsh/zshrc` 顶部的 P10k instant-prompt 缓存块加了同样的 zsh 版本守卫，5.0.2 那台不会再看到 "minimum required version is 5.1" 的红字。
 
 ## 字体与 Powerlevel10k（不出现乱码方块）
 
