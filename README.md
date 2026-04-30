@@ -142,7 +142,7 @@ Plug '~/.vim/plugins-vendor/nerdtree'
 Powerlevel10k 要求 `zsh >= 5.1`。如果 `$ZSH_VERSION` 太老（典型场景：RHEL/CentOS 7 自带 5.0.2，且不允许升级 zsh），`zsh/zshrc` 会自动改用它的前身 **Powerlevel9k**：
 
 - `zsh/vendor/powerlevel10k/` —— `zsh >= 5.1` 时使用，配置文件 `zsh/p10k.zsh`（链到 `~/.p10k.zsh`）。
-- `zsh/vendor/powerlevel9k/`  —— `zsh < 5.1` 时使用，配置文件 `zsh/p9k.zsh`（链到 `~/.p9k.zsh`）；rainbow 风格，整体外观与 p10k preset 接近。
+- `zsh/vendor/powerlevel9k/`  —— `zsh < 5.1` 时使用，配置文件 `zsh/p9k.zsh`（链到 `~/.p9k.zsh`；未链接时 `zshrc` 会从 `$DOTFILES/zsh/p9k.zsh` 直接加载）。右侧 prompt 段仅包含当前 vendor 快照里存在的 segment（本仓库内的 P9K 无 `terraform` 段）。rainbow 风格，整体外观与 p10k preset 接近。
 
 两套主题都假设你装了 MesloLGS NF（仓库的 `fonts/` 已经带）。`zsh/zshrc` 顶部的 P10k instant-prompt 缓存块也加了同样的 zsh 版本守卫，所以 5.0.2 那台不会再看到 "minimum required version is 5.1" 的红字。
 

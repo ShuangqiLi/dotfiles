@@ -48,7 +48,30 @@ else
     done
     unset _l
   fi
-  [[ -f ~/.p9k.zsh ]] && source ~/.p9k.zsh
+  # Prefer ~/.p9k.zsh (install symlinks to repo); if missing, load from repo so segment lists always apply.
+  if [[ -r "$HOME/.p9k.zsh" ]]; then
+    source "$HOME/.p9k.zsh"
+  elif [[ -r "$DOTFILES/zsh/p9k.zsh" ]]; then
+    source "$DOTFILES/zsh/p9k.zsh"
+  fi
+
+  # If LEFT/RIGHT got set as an empty *scalar*, Powerlevel9k's `defined` skips defaults but the theme
+  # iterates one empty segment → `command not found: prompt_`. Drop bogus values / stray "" array elems.
+  if (( ${+POWERLEVEL9K_LEFT_PROMPT_ELEMENTS} )) && [[ ${(t)POWERLEVEL9K_LEFT_PROMPT_ELEMENTS} != array* ]]; then
+    unset POWERLEVEL9K_LEFT_PROMPT_ELEMENTS
+  fi
+  if (( ${+POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS} )) && [[ ${(t)POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS} != array* ]]; then
+    unset POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS
+  fi
+  if (( ${+POWERLEVEL9K_LEFT_PROMPT_ELEMENTS} )) && [[ ${(t)POWERLEVEL9K_LEFT_PROMPT_ELEMENTS} == array* ]]; then
+    POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(${POWERLEVEL9K_LEFT_PROMPT_ELEMENTS[@]:#})
+    (( ${#POWERLEVEL9K_LEFT_PROMPT_ELEMENTS[@]} )) || unset POWERLEVEL9K_LEFT_PROMPT_ELEMENTS
+  fi
+  if (( ${+POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS} )) && [[ ${(t)POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS} == array* ]]; then
+    POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(${POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS[@]:#})
+    (( ${#POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS[@]} )) || unset POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS
+  fi
+
   [[ -r "$DOTFILES/zsh/vendor/powerlevel9k/powerlevel9k.zsh-theme" ]] && \
     source "$DOTFILES/zsh/vendor/powerlevel9k/powerlevel9k.zsh-theme"
 fi

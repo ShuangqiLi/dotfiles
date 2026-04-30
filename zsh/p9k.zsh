@@ -27,38 +27,27 @@ POWERLEVEL9K_PROMPT_ADD_NEWLINE=true
 # LC_CTYPE is C/POSIX (zsh validates \uXXXX against the locale's wide-char
 # range and otherwise emits "character not in range", leaving the string
 # empty — which then breaks the rest of the array assignments below).
-#   U+E0B0  
+#   U+E0B0
 POWERLEVEL9K_LEFT_SEGMENT_SEPARATOR=$'\xee\x82\xb0'
-#   U+E0B2  
+#   U+E0B2
 POWERLEVEL9K_RIGHT_SEGMENT_SEPARATOR=$'\xee\x82\xb2'
-#   U+E0B1  
+#   U+E0B1
 POWERLEVEL9K_LEFT_SUBSEGMENT_SEPARATOR=$'\xee\x82\xb1'
-#   U+E0B3  
+#   U+E0B3
 POWERLEVEL9K_RIGHT_SUBSEGMENT_SEPARATOR=$'\xee\x82\xb3'
 
 POWERLEVEL9K_MULTILINE_FIRST_PROMPT_PREFIX='%K{black}%F{black} '
 #   U+276F ❯
 POWERLEVEL9K_MULTILINE_LAST_PROMPT_PREFIX=$'%F{cyan}\xe2\x9d\xaf%f '
 
-# Segment lists (mirror the p10k preset, restricted to segments P9K supports).
-POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(
-  dir
-  vcs
-)
+# Segment lists — single-line arrays only: zsh 5.0.x multiline (…) can inject ""
+# entries → Powerlevel9k calls `prompt_` → "command not found: prompt_".
+# Only use segments that exist in zsh/vendor/powerlevel9k (this snapshot has no terraform).
+POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(dir vcs)
+POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(status command_execution_time background_jobs virtualenv anaconda pyenv nvm kubecontext aws time)
 
-POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(
-  status
-  command_execution_time
-  background_jobs
-  virtualenv
-  anaconda
-  pyenv
-  nvm
-  kubecontext
-  aws
-  terraform
-  time
-)
+POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(${POWERLEVEL9K_LEFT_PROMPT_ELEMENTS[@]:#})
+POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(${POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS[@]:#})
 
 # Directory: blue background, dark foreground, truncate middle to keep prompt short.
 POWERLEVEL9K_SHORTEN_DIR_LENGTH=3
