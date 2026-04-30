@@ -34,6 +34,20 @@ if [[ $ZSH_VERSION == (5.<1->*|<6->.*) ]]; then
   [[ -r "$DOTFILES/zsh/vendor/powerlevel10k/powerlevel10k.zsh-theme" ]] && \
     source "$DOTFILES/zsh/vendor/powerlevel10k/powerlevel10k.zsh-theme"
 else
+  # P9K (and any zsh code using $'\uXXXX' escapes) needs a UTF-8 LC_CTYPE at
+  # parse time, otherwise zsh emits "character not in range" and the icon /
+  # separator strings end up empty — which in turn makes prompt segment
+  # dispatch fail with `command not found: prompt_`. Try common UTF-8 locales
+  # only if the current setting isn't already UTF-8.
+  if [[ "$LC_ALL$LC_CTYPE$LANG" != *(UTF-8|UTF8|utf-8|utf8)* ]]; then
+    for _l in en_US.UTF-8 en_US.utf8 C.UTF-8 C.utf8; do
+      if locale -a 2>/dev/null | grep -qiF -- "$_l"; then
+        export LC_CTYPE="$_l"
+        break
+      fi
+    done
+    unset _l
+  fi
   [[ -f ~/.p9k.zsh ]] && source ~/.p9k.zsh
   [[ -r "$DOTFILES/zsh/vendor/powerlevel9k/powerlevel9k.zsh-theme" ]] && \
     source "$DOTFILES/zsh/vendor/powerlevel9k/powerlevel9k.zsh-theme"

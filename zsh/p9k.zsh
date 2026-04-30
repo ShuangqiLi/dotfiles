@@ -17,14 +17,23 @@ typeset -g POWERLEVEL9K_PROMPT_ON_NEWLINE=true
 typeset -g POWERLEVEL9K_RPROMPT_ON_NEWLINE=false
 typeset -g POWERLEVEL9K_PROMPT_ADD_NEWLINE=true
 
-# Powerline separators (filled triangle / sharp head).
-typeset -g POWERLEVEL9K_LEFT_SEGMENT_SEPARATOR=$'\uE0B0'   # 
-typeset -g POWERLEVEL9K_RIGHT_SEGMENT_SEPARATOR=$'\uE0B2'  # 
-typeset -g POWERLEVEL9K_LEFT_SUBSEGMENT_SEPARATOR=$'\uE0B1'
-typeset -g POWERLEVEL9K_RIGHT_SUBSEGMENT_SEPARATOR=$'\uE0B3'
+# Powerline separators (filled triangle / sharp head). Use raw UTF-8 byte
+# sequences instead of $'\uXXXX' so this file parses cleanly even when
+# LC_CTYPE is C/POSIX (zsh validates \uXXXX against the locale's wide-char
+# range and otherwise emits "character not in range", leaving the string
+# empty — which then breaks the rest of the array assignments below).
+#   U+E0B0  
+typeset -g POWERLEVEL9K_LEFT_SEGMENT_SEPARATOR=$'\xee\x82\xb0'
+#   U+E0B2  
+typeset -g POWERLEVEL9K_RIGHT_SEGMENT_SEPARATOR=$'\xee\x82\xb2'
+#   U+E0B1  
+typeset -g POWERLEVEL9K_LEFT_SUBSEGMENT_SEPARATOR=$'\xee\x82\xb1'
+#   U+E0B3  
+typeset -g POWERLEVEL9K_RIGHT_SUBSEGMENT_SEPARATOR=$'\xee\x82\xb3'
 
 typeset -g POWERLEVEL9K_MULTILINE_FIRST_PROMPT_PREFIX='%K{black}%F{black} '
-typeset -g POWERLEVEL9K_MULTILINE_LAST_PROMPT_PREFIX='%F{cyan}\u276F%f '   # ❯
+#   U+276F ❯
+typeset -g POWERLEVEL9K_MULTILINE_LAST_PROMPT_PREFIX=$'%F{cyan}\xe2\x9d\xaf%f '
 
 # Segment lists (mirror the p10k preset, restricted to segments P9K supports).
 typeset -g POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(
