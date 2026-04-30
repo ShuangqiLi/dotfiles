@@ -1757,6 +1757,8 @@ build_left_prompt() {
   for element in "${POWERLEVEL9K_LEFT_PROMPT_ELEMENTS[@]}"; do
     # Remove joined information in direct calls
     element=${element%_joined}
+    # zsh 5.0.x / bad configs can leave "" entries → would call `prompt_` (E command not found).
+    [[ -z "$element" ]] && continue
 
     # Check if it is a custom command, otherwise interpet it as
     # a prompt.
@@ -1779,6 +1781,7 @@ build_right_prompt() {
   for element in "${POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS[@]}"; do
     # Remove joined information in direct calls
     element=${element%_joined}
+    [[ -z "$element" ]] && continue
 
     # Check if it is a custom command, otherwise interpet it as
     # a prompt.
