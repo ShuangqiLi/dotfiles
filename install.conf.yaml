@@ -18,6 +18,7 @@
       path: bashrc
       force: true
     ~/.p10k.zsh: p10k.zsh
+    ~/.p9k.zsh: p9k.zsh
     ~/.gitconfig: gitconfig
     ~/.gitconfig.local:
       path: gitconfig.local

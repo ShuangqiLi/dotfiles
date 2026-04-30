@@ -58,6 +58,15 @@ git submodule update --init --recursive
 
 > **Air-gapped note**: `vim-easycomplete` ships per-language installer scripts under `vim/plugins-vendor/vim-easycomplete/autoload/easycomplete/installer/*.sh` that download LSP servers (rust-analyzer, jdtls, omnisharp, …) over `curl`. Don't run `:InstallLspServer` on offline hosts; pre-stage the servers manually or skip those completion features.
 
+### Prompt theme: P10k with P9K fallback for old zsh
+
+Powerlevel10k requires `zsh >= 5.1`. If `$ZSH_VERSION` is older (e.g. **5.0.2** on stock RHEL/CentOS 7 where you can't upgrade zsh), `zshrc` automatically falls back to its predecessor **Powerlevel9k**:
+
+- `zsh/vendor/powerlevel10k/` (submodule) — used on zsh ≥ 5.1, configured via `~/.p10k.zsh`.
+- `zsh/vendor/powerlevel9k/` (submodule) — used on zsh < 5.1, configured via `~/.p9k.zsh` (rainbow-style preset roughly matching the P10k preset). Edit `p9k.zsh` in the repo.
+
+Both presets expect MesloLGS NF (vendored under `fonts/`). The Powerlevel10k instant-prompt cache block in `zshrc` is also gated on zsh ≥ 5.1, so the "minimum required version is 5.1" warning will not appear on older hosts.
+
 ## Fonts and Powerlevel10k (no garbled icons)
 
 See **`fonts/README.md`** for MesloLGS NF, what is committed vs downloaded, and **server vs Cursor/VS Code** font setup.
@@ -76,7 +85,7 @@ See also [Powerlevel10k fonts](https://github.com/romkatv/powerlevel10k#fonts).
 ## Layout
 
 - `install` / `install.conf.yaml` — Dotbot entrypoints
-- `zshrc`, `zsh/vendor/*` — Zsh: Oh My Zsh + zsh-autosuggestions + Powerlevel10k + zsh-syntax-highlighting (sourced directly via `$DOTFILES`)
+- `zshrc`, `zsh/vendor/*` — Zsh: Oh My Zsh + zsh-autosuggestions + Powerlevel10k (with Powerlevel9k fallback on zsh < 5.1) + zsh-syntax-highlighting (sourced directly via `$DOTFILES`)
 - `vimrc`, `vim/autoload/plug.vim`, `vim/plugins-vendor/*` — Vim + vim-plug (**plugins are git submodules**, wired via local `Plug` paths)
 - `fonts/` — Meslo via script; see `fonts/README.md`
 - `local/` — optional per-machine `env.zsh`; see `local/README.md`

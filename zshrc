@@ -1,7 +1,9 @@
-# Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
-# Initialization code that may require console input (password prompts, [y/n]
-# confirmations, etc.) must go above this block; everything else may go below.
-if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+# Enable Powerlevel10k instant prompt (only effective on zsh >= 5.1, which P10k
+# itself requires). Initialization code that may require console input (password
+# prompts, [y/n] confirmations, etc.) must go above this block; everything else
+# may go below.
+if [[ $ZSH_VERSION == (5.<1->*|<6->.*) ]] \
+   && [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
@@ -23,8 +25,17 @@ plugins=(git)
 [[ -r "$DOTFILES/zsh/vendor/zsh-autosuggestions/zsh-autosuggestions.plugin.zsh" ]] && \
   source "$DOTFILES/zsh/vendor/zsh-autosuggestions/zsh-autosuggestions.plugin.zsh"
 
-[[ -r "$DOTFILES/zsh/vendor/powerlevel10k/powerlevel10k.zsh-theme" ]] && \
-  source "$DOTFILES/zsh/vendor/powerlevel10k/powerlevel10k.zsh-theme"
+# Prompt theme: P10k requires zsh >= 5.1; on older zsh (e.g. 5.0.2 on RHEL 7),
+# fall back to its predecessor Powerlevel9k. P9K requires its config to be set
+# BEFORE the theme is sourced, so ~/.p9k.zsh is read first in that branch.
+if [[ $ZSH_VERSION == (5.<1->*|<6->.*) ]]; then
+  [[ -r "$DOTFILES/zsh/vendor/powerlevel10k/powerlevel10k.zsh-theme" ]] && \
+    source "$DOTFILES/zsh/vendor/powerlevel10k/powerlevel10k.zsh-theme"
+else
+  [[ -f ~/.p9k.zsh ]] && source ~/.p9k.zsh
+  [[ -r "$DOTFILES/zsh/vendor/powerlevel9k/powerlevel9k.zsh-theme" ]] && \
+    source "$DOTFILES/zsh/vendor/powerlevel9k/powerlevel9k.zsh-theme"
+fi
 
 # zsh-syntax-highlighting must be sourced last.
 [[ -r "$DOTFILES/zsh/vendor/zsh-syntax-highlighting/zsh-syntax-highlighting.plugin.zsh" ]] && \
@@ -44,6 +55,7 @@ HISTSIZE=10000
 SAVEHIST=10000
 setopt SHARE_HISTORY HIST_IGNORE_DUPS HIST_IGNORE_SPACE HIST_FIND_NO_DUPS HIST_REDUCE_BLANKS
 
+# P10k user config (no-op on zsh < 5.1: p10k.zsh itself early-returns).
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
 ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg-yellow'

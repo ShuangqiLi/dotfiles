@@ -62,3 +62,7 @@
 	path = vim/plugins-vendor/cecutil
 	url = https://github.com/vim-scripts/cecutil.git
 	ignore = dirty
+[submodule "zsh/vendor/powerlevel9k"]
+	path = zsh/vendor/powerlevel9k
+	url = https://github.com/Powerlevel9k/powerlevel9k.git
+	ignore = dirty
