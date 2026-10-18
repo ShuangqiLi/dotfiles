@@ -13,8 +13,8 @@
 # custom expansions, transient prompts, instant prompt, …) is P10k-only and
 # is intentionally omitted here.
 
-# Use Nerd Font glyphs (we ship MesloLGS NF under fonts/). Switch to
-# 'awesome-fontconfig' if your terminal only has the older Awesome font.
+# Use Nerd Font glyphs. Switch to 'awesome-fontconfig' if your terminal only
+# has the older Awesome font.
 POWERLEVEL9K_MODE='nerdfont-complete'
 
 # Two-line prompt: segments above, command line below.
@@ -44,7 +44,7 @@ POWERLEVEL9K_MULTILINE_LAST_PROMPT_PREFIX=$'%F{cyan}\xe2\x9d\xaf%f '
 
 # Segment lists — single-line arrays only: zsh 5.0.x multiline (…) can inject ""
 # entries → Powerlevel9k calls `prompt_` → "command not found: prompt_".
-# Only use segments that exist in zsh/vendor/powerlevel9k (this snapshot has no terraform).
+# Only use segments that exist in the fetched powerlevel9k plugin (no terraform).
 POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(dir vcs)
 POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(status command_execution_time background_jobs virtualenv anaconda pyenv nvm kubecontext aws time)
 

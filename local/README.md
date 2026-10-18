@@ -7,7 +7,7 @@
 
 ## 使用
 
-第一次跑 `./install` 时，`scripts/install.sh` 会自动把缺失的模板复制成真实文件（即 `local/gitconfig.local`）。`local/env.zsh` 不会自动创建——只有需要时手动从模板拷一份：
+第一次跑 `./install` 时，`install` 会自动把缺失的模板复制成真实文件（即 `local/gitconfig.local`）。`local/env.zsh` 不会自动创建——只有需要时手动从模板拷一份：
 
 ```bash
 cp local/env.zsh.example local/env.zsh

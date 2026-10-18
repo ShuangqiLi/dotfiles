@@ -1,169 +1,185 @@
-# Dotfiles
+# Personal dotfiles
 
-自包含、**离线优先**的 dotfiles。无插件管理器、无子模块、安装时不依赖任何外部工具——`./install` 只是一个小 bash 脚本，把文件软链到 `$HOME` 并跑几个安装后钩子。
+一份个人 dotfiles，覆盖：
+- **Zsh**：oh-my-zsh + autosuggestions + 语法高亮，powerlevel10k / powerlevel9k 二选一，外加 mo 项目自带的 prompt 状态。
+- **Tmux**：`C-q` 前缀、vi 键位、顶部状态栏（含 mo 的 CPU/内存/磁盘）。
+- **Vim**：完整配置 + vim-plug 插件，**插件本体随仓库带一份**（`vim/plugins-vendor/`，离线可用）。
+- **Git / GitHub CLI**：`gitconfig` / `gitconfig.local` / `github-cli`。
 
-**入库的内容都是通用配置**；每台机器自己的密钥和环境变量放在 [本地（不入库）](#本地不入库) 那一节列出的 gitignored 文件里。
+约定：
+
+* 仓库里的所有文件用占位符 `{{USER}}` / `{{HOST}}` 表示因人而异的内容；机器本地的差异放在 `local/` 下（`local/env.zsh`、`local/gitconfig.local`）。
+* 安装期**需要联网**：zsh 插件在首次加载时通过 codeload 拉取并缓存，不随仓库分发。仅 `vim/plugins-vendor/` 是离线随仓自带的。
 
 ## 仓库布局
 
-根目录只有 `install` 和 `README.md`，其余全部是文件夹：
-
 ```
-.
-├── install               # bash 入口 -> scripts/install.sh
-├── README.md
-├── bash/                 # bashrc（如果系统装了 zsh 就 exec 过去）
-├── git/                  # gitconfig, gitignore_global
-├── zsh/                  # zshrc, p10k.zsh, p9k.zsh, vendor/* (oh-my-zsh, p10k, p9k, …)
-├── vim/                  # vimrc, autoload/plug.vim, plugins-vendor/*
-├── vscode/               # settings.json, keybindings.json, extensions.txt, vsix/
-├── fonts/                # MesloLGS NF + License
-├── local/                # 仅本机用的 env.zsh / gitconfig.local（gitignore），以及 *.example 模板
-└── scripts/              # install.sh, package-for-offline.sh, update-vendor.sh, …
-```
-
-`./install` 只负责把这些文件软链到 `$HOME`（链接表见 `scripts/install.sh`）。`zsh/vendor/` 与 `vim/plugins-vendor/` 下面的所有内容都已经作为普通文件入库——没有 git 子模块，也没有 upstream 的提交历史。
-
-## 前置依赖
-
-- **Git**、**Bash 4.2+**（RHEL 7 自带的就够）、**coreutils**。
-- **Zsh** 作登录 shell（可选，但本套配置默认按这个写）。
-- **安装期不需要联网**：
-  - **Zsh 插件** 在 `zsh/vendor/<name>/` 下，纯文件。
-  - **Vim 插件** 在 `vim/plugins-vendor/<name>/` 下，纯文件。
-  - **MesloLGS NF 字体** 在 `fonts/` 下入库。
-  - **VS Code 1.85.2 扩展** 在 `vscode/vsix/*.vsix` 下入库；`code` CLI 必须能在 `PATH` 里找到（或者用 `VSCODE_CLI` 显式指定）。`SKIP_VSCODE_EXTENSIONS=1` 可以跳过这一步。
-
-## 安装
-
-```bash
-git clone <repo> ~/dotfiles
-cd ~/dotfiles
-./install        # 幂等；已经装好的机器再跑 ~3s
+dotfiles/
+├── install                    # 主入口：实际链接/复制/软链逻辑
+├── zsh/
+│   ├── zshrc                  # 主 rc；用 zsh_plugin_fetch 按需拉取插件到 $ZSH_PLUGINS_DIR
+│   ├── mo-prompt.zsh          # 调 ~/.mo/config/prompts.zsh
+│   ├── p10k.zsh               # powerlevel10k 配置（默认）
+│   └── p9k.zsh                # powerlevel9k 配置（用 DOTFILES_USE_P9K=1 启用）
+├── tmux/
+│   ├── tmux.conf
+│   └── mo-status.sh           # 状态栏右侧：CPU / 内存 / 磁盘（mo status --json）
+├── vim/
+│   ├── vimrc
+│   └── plugins-vendor/        # vim 插件本体（随仓库带，离线可用）
+├── gitconfig                  # 含 include! 指向 local/ 的 gitconfig.local
+├── github-cli                 # gh 配置
+├── local/                     # 机器本地、不入库的内容
+│   ├── env.zsh
+│   └── gitconfig.local
+│   （示例：env.zsh.example / gitconfig.local.example）
+└── README.md
 ```
 
-`./install` 直接 exec 到 `scripts/install.sh`（一个~110 行的 bash 脚本，dotbot 替身），执行顺序：
+`./install` 只负责把这些文件软链到 `$HOME`（链接表见 `install`）。`vim/plugins-vendor/` 下面是普通文件——没有 git 子模块，也没有 upstream 的提交历史。
 
-1. 如果 `local/gitconfig.local` 不存在，从 `local/gitconfig.local.example` 复制一份（参考 [本地（不入库）](#本地不入库)）。
-2. 清掉 `$HOME` 顶层那些断掉的符号链接。
-3. 把仓库里的文件软链到 `$HOME`：
-   - `~/.vimrc` → `vim/vimrc`，`~/.vim` → `vim/`
-   - `~/.zshrc` → `zsh/zshrc`，`~/.p10k.zsh` → `zsh/p10k.zsh`，`~/.p9k.zsh` → `zsh/p9k.zsh`
-   - `~/.bashrc` → `bash/bashrc`（带 force：原地的非软链文件会被直接覆盖，介意的话先备份）
-   - `~/.gitconfig` → `git/gitconfig`，`~/.gitconfig.local` → `local/gitconfig.local`，`~/.gitignore_global` → `git/gitignore_global`
-   - `~/.fonts` → `fonts/`
-   - `~/.config/Code/User/settings.json` → `vscode/settings.json`，`keybindings.json` 同理
-4. 校验 `fonts/` 下的 Meslo TTF 是否齐全，刷一次 `fc-cache`（默认无 `-f`，没改字体就跳过）。
-5. 用 `code --list-extensions --show-versions` 跟 `vscode/extensions.txt` 对账，只对**未装**或**版本不匹配**的扩展真正调用 `code --install-extension`，已经是目标版本的直接 skip。
+## 前置条件
 
-可调环境变量：
-
-| 变量                       | 作用                                            |
-|----------------------------|-------------------------------------------------|
-| `DRY_RUN=1`                | 只打印动作，不修改文件系统                      |
-| `SKIP_MESLO_FONTS=1`       | 跳过字体校验 + `fc-cache`                       |
-| `SKIP_VSCODE_EXTENSIONS=1` | 跳过 VS Code 扩展安装                           |
-| `VSCODE_CLI=/path/to/code` | 手动指定 `code` 可执行路径（绕开自动检测）      |
-
-`~/.bashrc` 与 `~/.gitconfig.local` 用 force 语义：如果对应位置已经有**非软链**的真实文件，会被无备份直接删除。介意的话请先手动备份。
-
-### 离线机器更新流程（sneakernet）
-
-离线机器没法 `git pull`。整个仓库现在是纯文件（无子模块），打包就是一条 `tar`：
-
-**有网那台：**
-
-```bash
-cd ~/dotfiles
-git pull
-scripts/package-for-offline.sh             # 输出 ../dotfiles-<sha>-<时间戳>.tar.gz
-# 或者更小（不带 .git，~131 MB 而非 ~420 MB）：
-NO_GIT=1 scripts/package-for-offline.sh
+```
+zsh tmux vim gh curl
 ```
 
-**离线那台：**
+* **tmux ≥ 1.9**：用了 `source-file` / `refresh-client`。
+* **zsh ≥ 5.1** 才会用 `powerlevel10k`；低于该版本自动退化到 `powerlevel9k`。
+* 在 **zsh 5.0.x + 非 UTF-8 locale** 上（典型如某些 macOS 15+ 容器化 zsh）P10K 加载会失败，脚本会捕获 `zerr` 回退到 P9K 纯文本配置。
+* **联网**：zsh 插件在首次加载时按 `codeload.github.com` 拉取（离线场景可先把 tarball 放进 `$ZSH_PLUGINS_DIR`，见下文）。仅 zsh 插件需要联网，vim 插件离线。
 
-```bash
-mv ~/dotfiles ~/dotfiles.bak.$(date +%s)
-tar -xzf dotfiles-<sha>-<时间戳>.tar.gz -C ~/
-cd ~/dotfiles && ./install
+## 安装 / 更新
+
+```sh
+./install
 ```
 
-整个过程没有任何 `git submodule update` 步骤——vendor 目录就是普通文件。第二次起 `./install` 全部幂等，约 3 秒。
+会做的事（幂等）：
+1. 把顶层文件软链到 `$HOME`（`zsh/zshrc` → `~/.zshrc`、`vim/vimrc` → `~/.vimrc`、`gitconfig` → `~/.gitconfig`、`github-cli` → `~/.github-cli`、`tmux/tmux.conf` → `~/.tmux/tmux.conf`）。
+2. 软链 `tmux/mo-status.sh` → `~/.config/mo-status.sh`（tmux 状态栏右侧读取）。
+3. 把 `local/env.zsh` 复制到 `~/.config/local/env.zsh`（不存在时）。
+4. 把 `local/gitconfig.local` 复制到 `~/.config/gitconfig.local`（不存在时）。
 
-### 更新某个 vendored 插件 / 主题
+如果某处的目标文件已存在但不是软链，脚本会先备份到 `.<name>.bak.<timestamp>` 再覆盖。
 
-只能在有网机器上跑：
+**重新链接**（改了 `install` 的链接表之后）：
+```sh
+yes | ./install
+```
+脚本默认 `read -r -p` 交互询问覆盖；管道/非交互调用时 `read` 在 EOF 直接退出，不会回退确认。
 
-```bash
-scripts/update-vendor.sh <vendor 路径> <git URL> [<ref>]
-# 示例：
-scripts/update-vendor.sh vim/plugins-vendor/nerdtree https://github.com/preservim/nerdtree.git master
-scripts/update-vendor.sh zsh/vendor/powerlevel10k    https://github.com/romkatv/powerlevel10k.git v1.20.0
+## 拉取 zsh 插件（联网）
+
+`zsh/zshrc` 顶部定义了 `zsh_plugin_fetch`，**首次缺件时**才去 codeload 拉一份小 tarball 并解压：
+
+```
+zsh_plugin_fetch <name> <owner/repo> <ref> <entry>
 ```
 
-脚本会克隆 upstream，删掉它的 `.git/`，把目标目录整个替换掉，并把改动 stage 起来。用 `git diff --cached <path>` 复核，再提交：
+* 缓存目录为 `$ZSH_PLUGINS_DIR`，默认 `${XDG_CACHE_HOME:-$HOME/.cache}/zsh-plugins`。
+* 仅当 `$ZSH_PLUGINS_DIR/<name>/<entry>` 不存在时才下载——已缓存则直接复用。
+* 拉取失败时回退到 `master`/`main` 分支，并打印警告；插件缺失时 zsh 仍能启动。
 
-```bash
-git commit -m "chore(vendor): update <path> to <ref>"
+首次拉取的插件：
+
+| 插件 | owner/repo | 默认 ref |
+|---|---|---|
+| oh-my-zsh | `ohmyzsh/ohmyzsh` | `master` |
+| zsh-autosuggestions | `zsh-users/zsh-autosuggestions` | `master` |
+| powerlevel10k (+ gitstatus) | `romkatv/powerlevel10k` | `master` |
+| powerlevel9k | `bhilburn/powerlevel9k` | `master` |
+| zsh-syntax-highlighting | `zsh-users/zsh-syntax-highlighting` | `master` |
+
+**离线场景**：把对应 tarball 手动放进 `$ZSH_PLUGINS_DIR/<name>/`（与解压结果结构一致），`zsh_plugin_fetch` 发现已存在就跳过下载。
+
+没有插件管理器：不依赖 `omz update` / `antidote` / `zinit` 之类。每个插件就是一份小 tarball，刷新方式见下。
+
+## 刷新单个 zsh 插件
+
+```sh
+# 删掉缓存，下次启动 zsh 就会重新拉取
+rm -rf "$ZSH_PLUGINS_DIR/powerlevel10k"
 ```
 
-### 本地（不入库）
+## 软链表（`install`）
 
-下面这些文件 **永远不要入库**（已经写在 `.gitignore`）。仓库只提供 `*.example` 模板，第一次 `./install` 会自动从模板复制成真实文件：
+| 仓库内 | 目标 |
+|---|---|
+| `zsh/zshrc` | `~/.zshrc` |
+| `zsh/mo-prompt.zsh`   | `~/.mo-prompt.zsh` |
+| `zsh/p10k.zsh`       | `~/.p10k.zsh` |
+| `zsh/p9k.zsh`        | `~/.p9k.zsh` |
+| `tmux/tmux.conf`     | `~/.tmux/tmux.conf` |
+| `tmux/mo-status.sh`  | `~/.config/mo-status.sh` |
+| `vim/vimrc`          | `~/.vimrc` |
+| `gitconfig`          | `~/.gitconfig` |
+| `github-cli`         | `~/.github-cli` |
 
-| 文件                              | 入库？ | 用途                                                                |
-|-----------------------------------|--------|---------------------------------------------------------------------|
-| **`local/gitconfig.local.example`** | 是     | Git 身份模板（user.name / user.email）                              |
-| **`local/gitconfig.local`**         | **否** | 真实的 git 身份；`./install` 首次跑时从模板复制，链到 `~/.gitconfig.local` |
-| **`local/env.zsh.example`**       | 是     | 本机 zsh 环境模板                                                   |
-| **`local/env.zsh`**               | **否** | 代理、`PATH`、机器密钥等；`zsh/zshrc` 末尾会 source 它                |
-| **`fonts/MesloLGS NF *.ttf`**     | 是     | 入库的 Meslo + `MesloLGS NF License.txt`（Apache 2.0）              |
+（`local/env.zsh` 与 `local/gitconfig.local` 是 **copy 而非 symlink**，让每台机器各自维护。）
 
-绝对不要把 **`local/gitconfig.local`** 或 **`local/env.zsh`** 提交。
+## 环境变量
 
-### Vim 插件
+| 名 | 默认 | 含义 |
+|---|---|---|
+| `ZSH_PLUGINS_DIR` | `${XDG_CACHE_HOME:-$HOME/.cache}/zsh-plugins` | zsh 插件缓存目录 |
+| `TMUX_NO_ATTACH` | 空 | 非空时登录 shell 不自动 attach 已存在 tmux session |
+| `DOTFILES_USE_P9K` | 空 | 非空则 zsh 加载 `~/.p9k.zsh`（默认用 `~/.p10k.zsh`） |
+| `MO_PROMPT` / `MO_PROMPT_MODE` | 见 `~/.mo/config/prompts.zsh` | mo 项目侧的 prompt 配置 |
 
-插件以普通目录形式放在 `vim/plugins-vendor/<name>/`，由 **vim-plug** 通过本地路径加载（`vim/vimrc` 里写的）：
+zsh prompt 顺序：mo 状态 → `powerlevel10k` / `powerlevel9k`（二选一）→ autosuggestions + 语法高亮。
+`powerlevel10k` / `powerlevel9k` 在仓库里都带一份缓存，二选一加载；`zsh/p9k.zsh` 只 `autoload powerlevel9k`（不加载 powerlevel10k），并带一层 `zerr` 回退：在 zsh 5.0.x + 非 UTF-8 locale 上 P9K 的 `icons.zsh` 会因为 `$'\uXXXX'` 被截断，本文件会 catch 住并退化到纯文本 prompt。
 
-```vim
-Plug '~/.vim/plugins-vendor/nerdtree'
-" ...
+## 已知坑
+
+### Vim 8.1 与 Vim 8.2 的 `set runtimepath` 差异
+
+本仓 `vimrc` 同时支持 **Vim 8.1** 和 **Vim 8.2**。关键区别在 `~/.vim/autoload/plug.vim` 加载前的 `set rtp=` 重写：
+
+| 版本 | 行为 |
+|---|---|
+| Vim 8.1 | `set rtp+=...; set rtp-=/usr/share/vim/...` 不会报错，但顺序不可控 |
+| Vim 8.2 | `set rtp-=X` 在 X 不在 runtimepath 时抛 `E521: ...` 警告，且 `set rtp=` 整条会**清空**当前 rtp |
+
+`vim/vimrc` 顶部按 `v:version` 分支：8.2 用 `set rtp=...` 直接重写；8.1 走 `set rtp+=` 增量。这样 8.1 / 8.2 都能正常加载 `vim/plugins/` 与 `vim/plugins-vendor/`。
+
+### 在 Vim 8.1 上 `Plug#...#Update!` 行为
+
+`plug.vim` 老版本对 `g:plug_update=1` 的处理与新版不一致：
+- 8.1：`Plug ... | Update!` 会触发 `git pull --ff-only`，需要联网且 `--ff-only` 在某些仓库上失败。
+- 8.2：`Update!` 走 `--force-rebase`，更宽容。
+
+本仓 `vim/plugins-vendor/` 是**纯文件**（git 不跟踪 upstream history），所以不依赖 `Plug ... | Update!` 在线拉取；离线/在线都能用。
+
+### Tmux + powerlevel10k 的 `git` 段
+
+`tmux/tmux.conf` 默认 prefix 为 `C-q`（避开 `C-b`，与 Vim `i` 模式下的 `C-o` 不冲突；避开 `C-c`/C-v，macOS 终端常用）。
+状态栏右侧由 `~/.config/mo-status.sh` 提供（`CPU / 内存 / 磁盘`），来自 `mo status --json`。
+P10K 的 git 段在 tmux 内会读 `TMUX_PANE_WORKING_DIR`；若 `gitstatus` 已加载（zsh 拉取时附带），git 段实时更新。
+
+### 字体
+
+P10K / P9K 的 `nerdfont-complete` 段需要 **Meslo LGS NF**（nerd-font），否则图标位置显示为方块。
+本仓不再内置字体，请自行安装 Meslo LGS NF 并在你的终端中选用。
+
+## 卸载
+
+```sh
+# 1. 解链 dotfiles
+for f in .zshrc .p10k.zsh .p9k.zsh .mo-prompt.zsh .vimrc .gitconfig .github-cli; do
+  [ -L "$HOME/$f" ] && unlink "$HOME/$f"
+done
+rm -f "$HOME/.tmux/tmux.conf" "$HOME/.config/mo-status.sh"
+
+# 2. 删缓存（zsh 插件缓存 + 备份）
+rm -rf "${ZSH_PLUGINS_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/zsh-plugins}"
+find "$HOME" -maxdepth 1 -name '.*.bak.*' -print -delete
 ```
 
-`plug#end()` 会把每个目录加到 `&runtimepath`，所以**完全不需要跑 `PlugInstall`**。
+`vim/plugins-vendor/` 是纯文件，随仓库一起删；如想保留已 vendor 的插件备份，先 `cp -a vim/plugins-vendor /tmp/` 再删仓库。
 
-**Vim 版本与 easycomplete**：`vim-easycomplete` 需要较新的 Vim（含 `v:null`、`v:true`/`v:false`、`job`、`timer` 等，约 **Vim 8.0+**）。`vim/vimrc` 在检测到环境不支持时会**自动不加载**该插件，避免在 RHEL 7 等自带 **Vim 7.4** 的机器上整屏 E121/E15；其余插件仍正常加载。若需要 LSP 补全，请在该机安装新版 Vim 后再用。终端光标序列 `&t_SR` 等在旧版上可能不存在，配置里已用 `exists('&t_SR')` 等形式做了探测，避免 E355。
+## 维护提示
 
-> **离线注意**：`vim-easycomplete` 在 `vim/plugins-vendor/vim-easycomplete/autoload/easycomplete/installer/*.sh` 里有一堆 LSP 服务器（rust-analyzer、jdtls、omnisharp…）的下载脚本，会用 `curl` 联网。在离线机器上不要执行 `:InstallLspServer`；要么提前在有网机器上准备好 LSP 二进制，要么放弃对应语言的补全功能。
-
-### Prompt 主题：P10k + 老 zsh 用纯 zsh 写的回退版
-
-Powerlevel10k 要求 `zsh >= 5.1`。如果 `$ZSH_VERSION` 太老（典型场景：RHEL/CentOS 7 自带 5.0.2，且不允许升级 zsh），`zsh/zshrc` 会改用一个**手写的小 prompt**：
-
-- `zsh/vendor/powerlevel10k/` —— `zsh >= 5.1` 时使用，配置文件 `zsh/p10k.zsh`（链到 `~/.p10k.zsh`）。
-- `zsh/prompt-fallback.zsh`  —— `zsh < 5.1` 时默认使用。基于 `vcs_info` + 普通 zsh prompt 转义；两行布局：第一行 `user@host  cwd  (git-branch±)` + 右侧 `[exit] HH:MM:SS`，第二行光标前 `❯`（成功为绿色，失败为红色）。**不依赖** nerd font / UTF-8 locale，所以即便 `LANG=C` 也是可见的。
-- `zsh/vendor/powerlevel9k/` 仍然随仓库分发，但**不再默认加载**——它的 `functions/icons.zsh` 大量使用 `$'\uXXXX'` 转义，在 zsh 5.0.x + 非 UTF-8 locale 下解析阶段就会被截断为空，最终图标 / 分隔符 / 颜色全部丢失，prompt 看起来像“空”。如果你想再尝试 P9K，导出 `DOTFILES_USE_P9K=1` 后启动 zsh，会沿用旧的 `zsh/p9k.zsh` + 消毒逻辑。
-
-两套主要主题（P10k / fallback）都不强求 nerd font；只有 P10k 默认那套图标体验需要 MesloLGS NF（仓库 `fonts/` 已经带）。`zsh/zshrc` 顶部的 P10k instant-prompt 缓存块加了同样的 zsh 版本守卫，5.0.2 那台不会再看到 "minimum required version is 5.1" 的红字。
-
-## 字体与 Powerlevel10k（不出现乱码方块）
-
-字体细节（具体哪些 TTF 入库、IDE 端怎么配字体）见 **`fonts/README.md`**。
-
-简版：在 Cursor / VS Code 跑 IDE 的那台机器的 **User** settings.json 里加：
-
-```json
-{
-  "terminal.integrated.fontFamily": "'MesloLGS NF', monospace",
-  "terminal.integrated.fontSize": 14
-}
-```
-
-也可以参考官方的 [Powerlevel10k fonts](https://github.com/romkatv/powerlevel10k#fonts)。
-
-## 参考链接
-
-- [vim-plug](https://github.com/junegunn/vim-plug/wiki)
-- [Powerlevel10k fonts](https://github.com/romkatv/powerlevel10k#fonts)
-- [Powerlevel9k Stylizing Your Prompt](https://github.com/Powerlevel9k/powerlevel9k/wiki/Stylizing-Your-Prompt)
+* **改 `zsh/zshrc` 的插件清单后**：删掉对应缓存目录即可触发重拉，无需动仓库。
+* **改 `vim/plugins-vendor/` 后**：跑一次 `:PlugClean`。
+* **改 `install` 链接表后**：`yes | ./install` 重链一次。

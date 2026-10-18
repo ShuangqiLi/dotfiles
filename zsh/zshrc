@@ -9,89 +9,155 @@ fi
 
 export PATH=$HOME/.local/bin:/usr/local/bin:$PATH
 
-# Repo root (this file is symlinked from <dotfiles>/zsh/zshrc). Used to source
-# vendored zsh plugins. ${(%):-%x} expands to the path of THIS file; :A resolves
-# symlinks, :h:h goes up two levels (zsh/zshrc -> zsh -> repo root).
+# Repo root (this file is symlinked from <dotfiles>/zsh/zshrc). ${(%):-%x}
+# expands to the path of THIS file; :A resolves symlinks, :h:h goes up two
+# levels (zsh/zshrc -> zsh -> repo root), so DOTFILES is the repo root.
+# NOTE: this only works because .zshrc is a *symlink*. A plain copy resolves
+# to the wrong root and every plugin path below would silently no-op.
 export DOTFILES="${DOTFILES:-${${(%):-%x}:A:h:h}}"
 
 ######################################################################
-# Vendored zsh plugins (no plugin manager, no network)
+# Network zsh plugins (fetched on first use, cached under $ZSH_PLUGINS_DIR)
+#   No vendored copies, no plugin manager. Each plugin is a small tarball
+#   downloaded from codeload.github.com (which stays reachable even when the
+#   git/https endpoint is blocked) and cached once; re-runs are a no-op until
+#   the plugin dir is removed. Override the cache root:
+#   export ZSH_PLUGINS_DIR=/some/path
 ######################################################################
-export ZSH="$DOTFILES/zsh/vendor/ohmyzsh"
+export ZSH_PLUGINS_DIR="${ZSH_PLUGINS_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/zsh-plugins}"
+
+# zsh_plugin_fetch <name> <owner/repo> <ref> <entry>
+#   Downloads a tarball from codeload.github.com (works when the git/https
+#   endpoint is blocked but codeload is reachable). Idempotent: the tarball is
+#   only fetched when $ZSH_PLUGINS_DIR/<name> is missing.
+#   <owner/repo> e.g. "romkatv/powerlevel10k".
+zsh_plugin_fetch() {
+  local name="$1" repo="$2" ref="$3" entry="$4"
+  local dir="$ZSH_PLUGINS_DIR/$name"
+  if [[ ! -f "$dir/$entry" ]]; then
+    rm -rf "$dir"
+    local tmp tarball
+    tmp="$(mktemp -d)"
+    tarball="$tmp/$name.tar.gz"
+    # Try the requested ref first, then fall back to master/main.
+    if ! curl -sL --max-time 30 -o "$tarball" \
+        "https://codeload.github.com/$repo/tar.gz/refs/heads/$ref" || \
+       ! [[ -s "$tarball" ]]; then
+      for _r in master main; do
+        curl -sL --max-time 30 -o "$tarball" \
+          "https://codeload.github.com/$repo/tar.gz/refs/heads/$_r" && break
+      done
+    fi
+    if tar -tzf "$tarball" >/dev/null 2>&1; then
+      mkdir -p "$dir"
+      tar -xzf "$tarball" -C "$tmp"
+      # The archive has a single top-level dir (owner-or-slug-<ref>); detect
+      # it dynamically and move its contents into $dir. Use a glob that keeps
+      # dotfiles (.version, .revision-hash, etc.) which `*` alone would skip.
+      local top
+      top="$(tar -tzf "$tarball" 2>/dev/null | head -1 | cut -d/ -f1)"
+      if [[ -n "$top" && -d "$tmp/$top" ]]; then
+        setopt LOCAL_OPTIONS
+        setopt -s GLOB_DOTS 2>/dev/null || true
+        mv "$tmp/$top"/* "$dir/" 2>/dev/null
+        unsetopt -s GLOB_DOTS 2>/dev/null || true
+      fi
+    fi
+    rm -rf "$tmp"
+  fi
+  [[ -f "$dir/$entry" ]] && source "$dir/$entry"
+}
+
+# Oh My Zsh (core + git plugin). P10k/theme override ZSH_THEME below.
+# Export ZSH explicitly so oh-my-zsh.sh uses our fetched copy and ignores any
+# stale ZSH/DOTFILES inherited from the parent environment.
+export ZSH="$ZSH_PLUGINS_DIR/oh-my-zsh"
 ZSH_DISABLE_COMPFIX=true
 DISABLE_AUTO_TITLE="true"
 ZSH_THEME=""
 plugins=(git)
-[[ -r "$ZSH/oh-my-zsh.sh" ]] && source "$ZSH/oh-my-zsh.sh"
+zsh_plugin_fetch oh-my-zsh ohmyzsh/ohmyzsh master oh-my-zsh.sh
 
-[[ -r "$DOTFILES/zsh/vendor/zsh-autosuggestions/zsh-autosuggestions.plugin.zsh" ]] && \
-  source "$DOTFILES/zsh/vendor/zsh-autosuggestions/zsh-autosuggestions.plugin.zsh"
+# Autosuggestions.
+zsh_plugin_fetch zsh-autosuggestions \
+  zsh-users/zsh-autosuggestions master \
+  zsh-autosuggestions.plugin.zsh
 
 # Prompt theme.
-# - zsh >= 5.1 → Powerlevel10k.
-# - zsh < 5.1  → use the small built-in fallback in zsh/prompt-fallback.zsh.
-#   Powerlevel9k is *also* shipped under zsh/vendor/powerlevel9k for posterity,
-#   but on zsh 5.0.x it usually renders an empty prompt because its icons.zsh
-#   relies on $'\uXXXX' which fail at parse time without UTF-8 LC_CTYPE.
-#   To opt back into P9K experimentation, export DOTFILES_USE_P9K=1.
+# - zsh >= 5.1 → Powerlevel10k (current recommended).
+# - zsh < 5.1  → build a small prompt inline; P9K needs UTF-8 LC_CTYPE and
+#   still chokes on old zsh, so we only use it via DOTFILES_USE_P9K=1.
 if [[ $ZSH_VERSION == (5.<1->*|<6->.*) ]]; then
-  [[ -r "$DOTFILES/zsh/vendor/powerlevel10k/powerlevel10k.zsh-theme" ]] && \
-    source "$DOTFILES/zsh/vendor/powerlevel10k/powerlevel10k.zsh-theme"
-elif [[ -z "${DOTFILES_USE_P9K:-}" ]]; then
-  [[ -r "$DOTFILES/zsh/prompt-fallback.zsh" ]] && \
-    source "$DOTFILES/zsh/prompt-fallback.zsh"
-else
-  # P9K (and any zsh code using $'\uXXXX' escapes) needs a UTF-8 LC_CTYPE at
-  # parse time, otherwise zsh emits "character not in range" and the icon /
-  # separator strings end up empty — which in turn makes prompt segment
-  # dispatch fail with `command not found: prompt_`. Try common UTF-8 locales
-  # only if the current setting isn't already UTF-8.
-  if [[ "$LC_ALL$LC_CTYPE$LANG" != *(UTF-8|UTF8|utf-8|utf8)* ]]; then
-    for _l in en_US.UTF-8 en_US.utf8 C.UTF-8 C.utf8; do
-      if locale -a 2>/dev/null | grep -qiF -- "$_l"; then
-        export LC_CTYPE="$_l"
-        break
+  zsh_plugin_fetch powerlevel10k \
+    romkatv/powerlevel10k master \
+    powerlevel10k.zsh-theme
+
+  # Best-effort gitstatus binary for live git segments. The precompiled binary
+  # lives only on GitHub's *release* download host, not the codeload tarball;
+  # if that host is unreachable this is skipped silently and p10k still renders
+  # every non-git segment. Opt out entirely with DOTFILES_GITSTATUS=0.
+  _zsh_install_gitstatus() {
+    setopt localoptions null_glob
+    local gsdir="$ZSH_PLUGINS_DIR/powerlevel10k/gitstatus"
+    local uname_s uname_m gsver gsbin
+    uname_s="$(uname -s)"; uname_m="$(uname -m)"
+    case "$uname_s-$uname_m" in
+      darwin-arm64|Darwin-arm64)   gsver="v1.5.4"; gsbin="gitstatusd-darwin-arm64" ;;
+      darwin-x86_64|Darwin-x86_64) gsver="v1.5.4"; gsbin="gitstatusd-darwin-x86_64" ;;
+      *)                            gsbin="gitstatusd-$uname_s-$uname_m" ;;
+    esac
+    if [[ -n "$gsbin" && ! -x "$gsdir/usrbin/$gsbin" ]]; then
+      mkdir -p "$gsdir/usrbin"
+      local gsurl
+      for gsurl in \
+        "https://github.com/romkatv/gitstatus/releases/download/${gsver:-v1.5.5}/$gsbin.tar.gz" \
+        "https://gitee.com/romkatv/gitstatus/raw/release-${gsver:-v1.5.5}/release/$gsbin.tar.gz"; do
+        curl -fsSL --max-time 30 -o /tmp/$$gitstatusd.tar.gz "$gsurl" && break
+      done
+      if [[ -s /tmp/$$gitstatusd.tar.gz ]]; then
+        tar -xzf /tmp/$$gitstatusd.tar.gz -C "$gsdir/usrbin"
+        chmod +x "$gsdir/usrbin/$gsbin" 2>/dev/null
       fi
-    done
-    unset _l
+      command rm -f /tmp/$$gitstatusd.tar.gz
+    fi
+    # If no binary is present, tell p10k not to look for one so it stops printing
+    # the "gitstatus failed to initialize" nag (the git segment just shows blank).
+    local bin
+    bin=("$gsdir/usrbin/gitstatusd-*")
+    if (( ${#bin} == 0 )); then
+      export GITSTATUS_INSTALLATION_DIR=
+    fi
+  }
+  if [[ "${DOTFILES_GITSTATUS:-1}" != 0 ]]; then
+    _zsh_install_gitstatus
   fi
-  # Prefer ~/.p9k.zsh (install symlinks to repo); if missing, load from repo so segment lists always apply.
-  if [[ -r "$HOME/.p9k.zsh" ]]; then
-    source "$HOME/.p9k.zsh"
-  elif [[ -r "$DOTFILES/zsh/p9k.zsh" ]]; then
-    source "$DOTFILES/zsh/p9k.zsh"
+  unset -f _zsh_install_gitstatus
+else
+  # P9K (and any $'\uXXXX' code) needs a UTF-8 LC_CTYPE at parse time.
+  if [[ -n "${DOTFILES_USE_P9K:-}" ]]; then
+    if [[ "$LC_ALL$LC_CTYPE$LANG" != *(UTF-8|UTF8|utf-8|utf8)* ]]; then
+      for _l in en_US.UTF-8 en_US.utf8 C.UTF-8 C.utf8; do
+        if locale -a 2>/dev/null | grep -qiF -- "$_l"; then
+          export LC_CTYPE="$_l"
+          break
+        fi
+      done
+      unset _l
+    fi
+    zsh_plugin_fetch powerlevel9k \
+      bhilburn/powerlevel9k master \
+      powerlevel9k.zsh-theme
+    setopt prompt_subst 2>/dev/null || true
+  else
+    # Minimal fallback so the prompt is never blank on old zsh.
+    PROMPT='%~ %# '
   fi
-
-  # If LEFT/RIGHT got set as an empty *scalar*, Powerlevel9k's `defined` skips defaults but the theme
-  # iterates one empty segment → `command not found: prompt_`. Unset non-arrays so defaults / fallbacks apply.
-  if (( ${+POWERLEVEL9K_LEFT_PROMPT_ELEMENTS} )) && [[ ${(t)POWERLEVEL9K_LEFT_PROMPT_ELEMENTS} != array* ]]; then
-    unset POWERLEVEL9K_LEFT_PROMPT_ELEMENTS
-  fi
-  if (( ${+POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS} )) && [[ ${(t)POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS} != array* ]]; then
-    unset POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS
-  fi
-
-  # If segment arrays are still missing or empty (old zsh / bad env), force sane defaults so the prompt is not blank.
-  if (( ! ${+POWERLEVEL9K_LEFT_PROMPT_ELEMENTS} )) || [[ ${(t)POWERLEVEL9K_LEFT_PROMPT_ELEMENTS} != array* ]] || (( ${#POWERLEVEL9K_LEFT_PROMPT_ELEMENTS[@]} == 0 )); then
-    typeset -a POWERLEVEL9K_LEFT_PROMPT_ELEMENTS
-    POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(context dir vcs)
-  fi
-  if (( ! ${+POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS} )) || [[ ${(t)POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS} != array* ]] || (( ${#POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS[@]} == 0 )); then
-    typeset -a POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS
-    POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(status root_indicator background_jobs history time)
-  fi
-
-  [[ -r "$DOTFILES/zsh/vendor/powerlevel9k/powerlevel9k.zsh-theme" ]] && \
-    source "$DOTFILES/zsh/vendor/powerlevel9k/powerlevel9k.zsh-theme"
-
-  # Oh My Zsh / other hooks sometimes toggle this; Powerlevel9k needs command substitution in PROMPT.
-  setopt prompt_subst 2>/dev/null || true
 fi
 
 # zsh-syntax-highlighting must be sourced last.
-[[ -r "$DOTFILES/zsh/vendor/zsh-syntax-highlighting/zsh-syntax-highlighting.plugin.zsh" ]] && \
-  source "$DOTFILES/zsh/vendor/zsh-syntax-highlighting/zsh-syntax-highlighting.plugin.zsh"
-
+zsh_plugin_fetch zsh-syntax-highlighting \
+  zsh-users/zsh-syntax-highlighting master \
+  zsh-syntax-highlighting.plugin.zsh
 bindkey '^ ' autosuggest-accept
 bindkey '^\n' autosuggest-execute
 
@@ -119,17 +185,24 @@ fi
 ######################################################################
 # alias
 ######################################################################
-if ls --color=auto / >/dev/null 2>&1; then
-  alias ls='ls --color=auto'
-  alias ll='ls -l --color=auto'
-  alias la='ls -A --color=auto'
-elif [[ "$OSTYPE" == darwin* ]]; then
-  alias ls='ls -G'
-  alias ll='ls -lG'
-  alias la='ls -AG'
+if command -v eza &>/dev/null; then
+  alias ls='eza --icons --group-directories-first'
+  alias ll='eza -lh --icons --git --group-directories-first'
+  alias la='eza -a --icons --git --group-directories-first'
+  alias lt='eza --tree --level=2 --icons'
 else
-  alias ll='ls -l'
-  alias la='ls -A'
+  if ls --color=auto / >/dev/null 2>&1; then
+    alias ls='ls --color=auto'
+    alias ll='ls -l --color=auto'
+    alias la='ls -A --color=auto'
+  elif [[ "$OSTYPE" == darwin* ]]; then
+    alias ls='ls -G'
+    alias ll='ls -lG'
+    alias la='ls -AG'
+  else
+    alias ll='ls -l'
+    alias la='ls -A'
+  fi
 fi
 
 alias ..='cd ..'
@@ -166,3 +239,13 @@ alias go='cd `git rev-parse --show-toplevel`'
 
 # Machine-specific env (not in git): see local/env.zsh.example
 [[ -f "$DOTFILES/local/env.zsh" ]] && source "$DOTFILES/local/env.zsh"
+
+# Auto-attach tmux on login shells (disable per-shell with TMUX_NO_ATTACH=1)
+if (( ! $+TMUX )) && (( ! $+TMUX_PANE )) && (( ! $+TMUX_NO_ATTACH )) \
+   && [[ "$0" == -* ]] && (( $+commands[tmux] )); then
+  if tmux has-session 2>/dev/null; then
+    tmux attach 2>/dev/null || tmux new-session
+  else
+    tmux new-session
+  fi
+fi
