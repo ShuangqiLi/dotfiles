@@ -240,12 +240,3 @@ alias go='cd `git rev-parse --show-toplevel`'
 # Machine-specific env (not in git): see local/env.zsh.example
 [[ -f "$DOTFILES/local/env.zsh" ]] && source "$DOTFILES/local/env.zsh"
 
-# Auto-attach tmux on login shells (disable per-shell with TMUX_NO_ATTACH=1)
-if (( ! $+TMUX )) && (( ! $+TMUX_PANE )) && (( ! $+TMUX_NO_ATTACH )) \
-   && [[ "$0" == -* ]] && (( $+commands[tmux] )); then
-  if tmux has-session 2>/dev/null; then
-    tmux attach 2>/dev/null || tmux new-session
-  else
-    tmux new-session
-  fi
-fi

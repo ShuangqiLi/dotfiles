@@ -189,28 +189,9 @@ nmap <leader>i :cs find i <C-R>=expand("<cfile>")<CR><CR>
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""
 set nocompatible
 
-" vim-easycomplete 依赖 v:null / v:true（约 Vim 8.0+）以及 job/timer 等；RHEL7 自带 Vim 7.4
-" 会整文件 E121/E15。能力不足则完全不加载该插件。
-let g:dotfiles_easycomplete_ok =
-      \ exists('v:null') && exists('v:true')
-      \ && (has('nvim') || (has('job') && has('timers')))
-
-" vim-easycomplete 在 plugin/easycomplete.vim 里才设置 g:env_is_vim；若 rtp 顺序、提前触发
-" CursorMoved、或 easycomplete_default_plugin_init 导致插件脚本提前 finish，autoload 会先引用
-" 这些变量 → E121。仅在会加载该插件时预先定义（且仅用 0/1，旧 Vim 无 v:true）。
-if g:dotfiles_easycomplete_ok && !exists('g:env_is_vim')
-  let g:env_is_vim = !has('nvim')
-  let g:env_is_nvim = !!has('nvim')
-  let g:env_is_iterm = !empty($ITERM_PROFILE)
-  let g:env_is_gui = has('termguicolors') && &termguicolors
-endif
-
 " 插件在 ~/.vim/plugins-vendor/ 下随仓库分发（无联网 git clone）。
 call plug#begin('~/.cache/vim/plugged')
 Plug '~/.vim/plugins-vendor/nerdtree'
-if g:dotfiles_easycomplete_ok
-  Plug '~/.vim/plugins-vendor/vim-easycomplete'
-endif
 Plug '~/.vim/plugins-vendor/undotree'
 Plug '~/.vim/plugins-vendor/tagbar'
 Plug '~/.vim/plugins-vendor/lightline.vim'
@@ -253,18 +234,6 @@ function! LightlineFilename()
   return gitbranch . filename . modified
 endfunction
 
-if g:dotfiles_easycomplete_ok
-  " Highlight the symbol when holding the cursor
-  let g:easycomplete_cursor_word_hl = 1
-  " Using nerdfont is highly recommended
-  let g:easycomplete_nerd_font = 1
-
-  " GoTo code navigation
-  nnoremap gr :EasyCompleteReference<CR>
-  nnoremap gd :EasyCompleteGotoDefinition<CR>
-  nnoremap rn :EasyCompleteRename<CR>
-  nnoremap gb :BackToOriginalBuffer<CR>
-endif
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => AutoCmd
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -282,15 +251,3 @@ if has("autocmd")
   au BufNewFile,BufRead SConsopts set filetype=python
 endif
 
-" 旧 Vim 上已跳过 easycomplete，启动时提示一次（不刷屏）
-if has('autocmd') && !g:dotfiles_easycomplete_ok
-  function! s:DotfilesWarnNoEasycomplete() abort
-    echohl WarningMsg
-    echo 'dotfiles: 未加载 vim-easycomplete（需 Vim 8+：v:null、job、timer 等；当前 v:version=' . v:version . '）'
-    echohl None
-  endfunction
-  augroup dotfiles_ec_warn
-    au!
-    au VimEnter * call s:DotfilesWarnNoEasycomplete() | augroup! dotfiles_ec_warn
-  augroup END
-endif
