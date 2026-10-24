@@ -22,8 +22,7 @@ dotfiles/
 │   ├── p10k.zsh               # powerlevel10k 配置（默认）
 │   └── p9k.zsh                # powerlevel9k 配置（用 DOTFILES_USE_P9K=1 启用）
 ├── tmux/
-│   ├── tmux.conf
-│   └── mo-status.sh           # 状态栏右侧：CPU / 内存 / 磁盘（mo status --json）
+│   └── tmux.conf
 ├── vim/
 │   ├── vimrc
 │   └── plugins-vendor/        # vim 插件本体（随仓库带，离线可用）
@@ -57,9 +56,8 @@ zsh tmux vim gh curl
 
 会做的事（幂等）：
 1. 把顶层文件软链到 `$HOME`（`zsh/zshrc` → `~/.zshrc`、`vim/vimrc` → `~/.vimrc`、`gitconfig` → `~/.gitconfig`、`github-cli` → `~/.github-cli`、`tmux/tmux.conf` → `~/.tmux/tmux.conf`）。
-2. 软链 `tmux/mo-status.sh` → `~/.config/mo-status.sh`（tmux 状态栏右侧读取）。
-3. 把 `local/env.zsh` 复制到 `~/.config/local/env.zsh`（不存在时）。
-4. 把 `local/gitconfig.local` 复制到 `~/.config/gitconfig.local`（不存在时）。
+2. 把 `local/env.zsh` 复制到 `~/.config/local/env.zsh`（不存在时）。
+3. 把 `local/gitconfig.local` 复制到 `~/.config/gitconfig.local`（不存在时）。
 
 如果某处的目标文件已存在但不是软链，脚本会先备份到 `.<name>.bak.<timestamp>` 再覆盖。
 
@@ -111,7 +109,6 @@ rm -rf "$ZSH_PLUGINS_DIR/powerlevel10k"
 | `zsh/p10k.zsh`       | `~/.p10k.zsh` |
 | `zsh/p9k.zsh`        | `~/.p9k.zsh` |
 | `tmux/tmux.conf`     | `~/.tmux/tmux.conf` |
-| `tmux/mo-status.sh`  | `~/.config/mo-status.sh` |
 | `vim/vimrc`          | `~/.vimrc` |
 | `gitconfig`          | `~/.gitconfig` |
 | `github-cli`         | `~/.github-cli` |
@@ -154,7 +151,6 @@ zsh prompt 顺序：mo 状态 → `powerlevel10k` / `powerlevel9k`（二选一�
 ### Tmux + powerlevel10k 的 `git` 段
 
 `tmux/tmux.conf` 默认 prefix 为 `C-q`（避开 `C-b`，与 Vim `i` 模式下的 `C-o` 不冲突；避开 `C-c`/C-v，macOS 终端常用）。
-状态栏右侧由 `~/.config/mo-status.sh` 提供（`CPU / 内存 / 磁盘`），来自 `mo status --json`。
 P10K 的 git 段在 tmux 内会读 `TMUX_PANE_WORKING_DIR`；若 `gitstatus` 已加载（zsh 拉取时附带），git 段实时更新。
 
 ### 字体
@@ -169,7 +165,7 @@ P10K / P9K 的 `nerdfont-complete` 段需要 **Meslo LGS NF**（nerd-font），�
 for f in .zshrc .p10k.zsh .p9k.zsh .mo-prompt.zsh .vimrc .gitconfig .github-cli; do
   [ -L "$HOME/$f" ] && unlink "$HOME/$f"
 done
-rm -f "$HOME/.tmux/tmux.conf" "$HOME/.config/mo-status.sh"
+rm -f "$HOME/.tmux/tmux.conf"
 
 # 2. 删缓存（zsh 插件缓存 + 备份）
 rm -rf "${ZSH_PLUGINS_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/zsh-plugins}"

@@ -84,7 +84,6 @@ link git/gitconfig            "$HOME/.gitconfig"
 link local/gitconfig.local    "$HOME/.gitconfig.local"                     force
 link git/gitignore_global     "$HOME/.gitignore_global"
 link tmux/tmux.conf           "$HOME/.tmux.conf"            force
-link tmux/mo-status.sh        "$HOME/.config/mo-status.sh"  force
 
 # --- Step 4: post-link hooks -----------------------------------------------
 info "Clearing Powerlevel10k instant-prompt cache"
