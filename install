@@ -73,17 +73,18 @@ link() {
   ok "$dst -> $abs"
 }
 
+link agents                   "$HOME/.agents"
 link vim/vimrc                "$HOME/.vimrc"
 link vim                      "$HOME/.vim"
 link zsh/zshrc                "$HOME/.zshrc"
 link local/env.zsh            "$HOME/.zshrc.local"
-link bash/bashrc              "$HOME/.bashrc"                              force
+link bash/bashrc              "$HOME/.bashrc"               force
 link zsh/p10k.zsh             "$HOME/.p10k.zsh"
 link zsh/p9k.zsh              "$HOME/.p9k.zsh"
 link git/gitconfig            "$HOME/.gitconfig"
-link local/gitconfig.local    "$HOME/.gitconfig.local"                     force
+link local/gitconfig.local    "$HOME/.gitconfig.local"      force
 link git/gitignore_global     "$HOME/.gitignore_global"
-link tmux/tmux.conf           "$HOME/.tmux.conf"            force
+link tmux/tmux.conf           "$HOME/.tmux.conf"
 
 # --- Step 4: post-link hooks -----------------------------------------------
 info "Clearing Powerlevel10k instant-prompt cache"
