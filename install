@@ -1,16 +1,19 @@
 #!/usr/bin/env bash
-# Top-level, self-contained installer (dotbot replacement). Symlinks files into
-# $HOME and runs post-link hooks. Idempotent: a clean re-run does no work and
-# exits ~0 in a few seconds.
+# Top-level, self-contained installer (dotbot replacement). Installs missing
+# tools, symlinks files into $HOME, installs fonts, and runs post-link hooks.
+# A fresh machine that has git + curl can run:  git clone ... && ./install
+# Idempotent: a clean re-run does no work and exits ~0 in a few seconds.
 #
 # Knobs:
-#   DRY_RUN=1               print actions, do not modify the filesystem
+#   DRY_RUN=1                print actions, do not modify the filesystem
+#   DOTFILES_INSTALL_PKGS=0  skip the package-installation step
 set -euo pipefail
 
 DOTFILES="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$DOTFILES"
 
 DRY_RUN="${DRY_RUN:-}"
+INSTALL_PKGS="${DOTFILES_INSTALL_PKGS:-1}"
 
 c_ok=$'\033[32m'
 c_warn=$'\033[33m'
@@ -23,16 +26,160 @@ log()   { printf '%s\n' "$*"; }
 info()  { printf '%s%s%s\n' "$c_dim" "$*" "$c_off"; }
 ok()    { printf '%sok%s    %s\n' "$c_ok" "$c_off" "$*"; }
 warn()  { printf '%swarn%s  %s\n' "$c_warn" "$c_off" "$*" >&2; }
-err()   { printf '%serr%s   %s\n' "$c_err" "$c_off" "$*" >&2; }
+err()   { printf '%serr%s   %s\n' "$c_err" "$*" "$c_off" >&2; }
+# Run a command, or just print it under DRY_RUN.
 run()   { if [[ -n "$DRY_RUN" ]]; then printf '%s+ %s%s\n' "$c_dim" "$*" "$c_off"; else "$@"; fi; }
+# Like run, but only execute when the guard command reports "missing".
+# run_if <guard> -- <action-cmd...> ; guard is evaluated with the given
+# command (e.g. "command -v python3" or "pip3 show python-argcomplete").
+run_if() {
+  local g=""; local -a gcmd=() acmd=()
+  local arg sep="guard"
+  for arg in "$@"; do
+    if [[ "$arg" == "--" ]]; then sep="action"; continue; fi
+    if [[ "$sep" == guard ]]; then gcmd+=("$arg"); else acmd+=("$arg"); fi
+  done
+  g="${gcmd[*]}"
+  if [[ -n "$DRY_RUN" ]]; then
+    local pre
+    pre="$( { ${gcmd[@]} || true; } 2>/dev/null )"
+    if [[ -n "$pre" ]]; then
+      info "missing: $g"
+      printf '%s+ %s%s\n' "$c_dim" "${acmd[*]}" "$c_off"
+    else
+      ok "installed: $g"
+    fi
+  elif [[ -z "$( { ${gcmd[@]} || true; } 2>/dev/null )" ]]; then
+    "${acmd[@]}"
+    ok "${acmd[*]}"
+  fi
+}
+# Some brew formulae are keg-only (binary not auto-linked): link the real
+# (unversioned) name into the brew bin dir so bare commands resolve.
+link_keg() {
+  local prefix src dst
+  prefix="$(brew --prefix "$1" 2>/dev/null)" || return 0
+  src="$prefix/bin/$1"; dst="$(brew --prefix)/bin/$2"
+  [[ -f "$src" ]] || return 0
+  run ln -sf "$src" "$dst"
+  ok "$dst -> $src"
+}
 
 # --- Step 1: ensure templated, gitignored files exist -----------------------
 if [[ ! -f local/gitconfig.local ]]; then
   info "Creating local/gitconfig.local from template"
   run cp local/gitconfig.local.example local/gitconfig.local
 fi
+if [[ ! -f local/env.zsh ]]; then
+  info "Creating local/env.zsh from template (edit for proxy/PATH/keys)"
+  run cp local/env.zsh.example local/env.zsh
+fi
 
-# --- Step 2: clean broken symlinks at the top level of $HOME ---------------
+# --- Step 2: install missing packages ---------------------------------------
+# Tools referenced by this repo:
+#   git zsh tmux starship eza ripgrep ctags node python
+# Plus the Python deps local/env.zsh.example relies on.
+BREW_FORMULAS=(git zsh tmux starship eza ripgrep ctags node python@3.15)
+BREW_TAPS=(rapid-mlx)
+APT_PACKAGES=(git zsh tmux eza ripgrep ctags nodejs npm python3 python3-pip)
+# Plus the Python deps local/env.zsh.example relies on (user-level, no sudo).
+PIP_PACKAGES=(argcomplete)
+
+install_pkgs() {
+  local os; os="$(uname -s)"
+
+  if [[ "$os" == "Darwin" ]]; then
+    if ! command -v brew >/dev/null 2>&1; then
+      info "Homebrew not found; installing (needs sudo for CLT)"
+      # Official installer; --quiet. Skipped entirely under DRY_RUN.
+      if [[ -n "$DRY_RUN" ]]; then
+        printf '%s+ %s%s\n' "$c_dim" "/bin/bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\" --quiet" "$c_off"
+      else
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" --quiet
+        ok "Homebrew"
+      fi
+      # Wire brew into this shell's PATH (official post-install steps).
+      if [[ -x /opt/homebrew/bin/brew ]]; then
+        eval "$(/opt/homebrew/bin/brew shellenv)"
+      elif [[ -x /usr/local/bin/brew ]]; then
+        eval "$(/usr/local/bin/brew shellenv)"
+      fi
+      command -v brew >/dev/null 2>&1 || { warn "brew still not on PATH; skipping package install (run the 'Next steps' it printed)"; return 0; }
+    fi
+    local f t missing=()
+    for f in "${BREW_FORMULAS[@]}"; do
+      command -v "$f" >/dev/null 2>&1 || missing+=("$f")
+    done
+    for t in "${BREW_TAPS[@]}"; do
+      run_if brew list --formula "$t" -- brew install "$t"
+    done
+    if (( ${#missing[@]} > 0 )); then
+      info "brew: installing ${missing[*]}"
+      run brew install "${missing[@]}"
+      ok "brew: ${missing[*]}"
+    else
+      ok "brew: all formulas present"
+    fi
+    # Keep unversioned names working for keg-only formulae (brew does not
+    # auto-link them): python@3.15 -> python3, node is fine, etc.
+    link_keg python@3.15 python3
+  else
+    # Linux: use the distro package manager when available (Debian/Ubuntu/RHEL).
+    local pm=""
+    if command -v apt-get >/dev/null 2>&1; then
+      pm="apt"
+    elif command -v dnf >/dev/null 2>&1; then
+      pm="dnf"
+    elif command -v yum >/dev/null 2>&1; then
+      pm="yum"
+    fi
+    if [[ -n "$pm" ]]; then
+      local SUDO="" pkg missing=()
+      [[ $(id -u) -ne 0 ]] && SUDO="sudo"
+      if [[ -z "$DRY_RUN" && -n "$SUDO" ]] && command -v sudo >/dev/null 2>&1; then
+        warn "package manager needs root; step will run via sudo"
+      fi
+      for pkg in "${APT_PACKAGES[@]}"; do
+        command -v "$pkg" >/dev/null 2>&1 || missing+=("$pkg")
+      done
+      # ctags has a different name on RHEL.
+      if [[ "$pm" == dnf || "$pm" == yum ]]; then
+        command -v ctags >/dev/null 2>&1 || missing+=("ctags")
+      fi
+      if (( ${#missing[@]} > 0 )); then
+        info "$pm: installing ${missing[*]}"
+        case "$pm" in
+          apt)  run $SUDO apt-get install -y "${missing[@]}" ;;
+          *)    run $SUDO "$pm" install -y "${missing[@]}" ;;
+        esac
+        ok "$pm: ${missing[*]}"
+      else
+        ok "$pm: all packages present"
+      fi
+    else
+      warn "no known package manager (apt/dnf/yum); skipping: ${APT_PACKAGES[*]}"
+    fi
+  fi
+
+  # Python deps used by local/env.zsh.example (user-level, no sudo).
+  if command -v pip3 >/dev/null 2>&1; then
+    for p in "${PIP_PACKAGES[@]}"; do
+      if pip3 show "$p" >/dev/null 2>&1; then
+        ok "pip: $p"
+      else
+        info "pip: installing $p"
+        run pip3 install --user --break-system-packages "$p"
+        ok "pip: $p"
+      fi
+    done
+  else
+    info "pip3 not found; skipping pip packages (${PIP_PACKAGES[*]}) — install python first"
+  fi
+}
+
+[[ "$INSTALL_PKGS" == 1 ]] && install_pkgs || info "Skipping package install (DOTFILES_INSTALL_PKGS=0)"
+
+# --- Step 3: clean broken symlinks at the top level of $HOME ----------------
 shopt -s dotglob nullglob
 for f in "$HOME"/.[!.]*; do
   if [[ -L "$f" && ! -e "$f" ]]; then
@@ -42,7 +189,7 @@ for f in "$HOME"/.[!.]*; do
 done
 shopt -u dotglob nullglob
 
-# --- Step 3: link config files into $HOME ----------------------------------
+# --- Step 4: link config files into $HOME -----------------------------------
 # Usage: link <source-relative-to-$DOTFILES> <target-absolute> [force]
 #   force: if target exists and is NOT already the desired symlink, replace
 #          it (no automatic backup; back up by hand if you care).
@@ -85,10 +232,10 @@ link git/gitconfig            "$HOME/.gitconfig"
 link local/gitconfig.local    "$HOME/.gitconfig.local"      force
 link git/gitignore_global     "$HOME/.gitignore_global"
 
-# --- Step 3b: install fonts ------------------------------------------------
+# --- Step 5: install fonts ---------------------------------------------------
 # Copies bundled fonts (e.g. MapleMono Nerd Font) into the user font directory:
 # macOS ~/Library/Fonts, Linux ~/.local/share/fonts (+ fontconfig cache rebuild).
-link_font_dir() {
+install_fonts() {
   local src="$1"
   if [[ ! -d "$src" ]]; then
     ok "No fonts bundled; skipping"
@@ -123,11 +270,13 @@ link_font_dir() {
   ok "Fonts -> $dst"
 }
 
-link_font_dir "$DOTFILES/fonts"
+install_fonts "$DOTFILES/fonts"
 
-# --- Step 4: post-link hooks -----------------------------------------------
+# --- Step 6: post-link hooks -------------------------------------------------
 info "Creating Vim cache directories"
 run mkdir -p "$HOME/.cache/vim/swap" "$HOME/.cache/vim/backup" "$HOME/.cache/vim/undo" "$HOME/.cache/vim/plugged"
 
 echo
 ok "All tasks completed."
+info "New shell session:  exec zsh"
+info "Edit local/env.zsh (proxy/PATH/keys) and local/gitconfig.local (git identity) if needed."
