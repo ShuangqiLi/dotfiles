@@ -1,83 +1,123 @@
 # Personal dotfiles
 
 一份个人 dotfiles，覆盖：
-- **Zsh**：oh-my-zsh + autosuggestions + 语法高亮，powerlevel10k / powerlevel9k 二选一，外加 mo 项目自带的 prompt 状态。
-- **Tmux**：`C-q` 前缀、vi 键位、顶部状态栏（含 mo 的 CPU/内存/磁盘）。
-- **Vim**：完整配置 + vim-plug 插件，**插件本体随仓库带一份**（`vim/plugins-vendor/`，离线可用）。
-- **Git / GitHub CLI**：`gitconfig` / `gitconfig.local` / `github-cli`。
+
+- **Zsh**：oh-my-zsh（联网拉取）+ autosuggestions + 语法高亮，**starship** 提示符（brew 安装，`config/starship.toml` 配置）。
+- **Tmux**：`C-q` 前缀、vi 键位、顶部 onedark 状态栏（tmux2k）、扩展键上报（适配 pi agent）。
+- **Vim**：完整配置，插件本体随仓库带一份（`vim/plugins-vendor/`，离线可用）。
+- **Git**：`git/gitconfig`（include `gitconfig.local`）+ 全局 gitignore。
+- **字体**：Maple Mono Nerd Font CN（`fonts/` 随仓，install 安装到用户字体目录）。
 
 约定：
 
-* 仓库里的所有文件用占位符 `{{USER}}` / `{{HOST}}` 表示因人而异的内容；机器本地的差异放在 `local/` 下（`local/zshrc.local`、`local/gitconfig.local`）。
-* 安装期**需要联网**：zsh 插件在首次加载时通过 codeload 拉取并缓存，不随仓库分发。仅 `vim/plugins-vendor/` 是离线随仓自带的。
+* 机器本地的差异放在 `local/` 下（`local/zshrc.local`、`local/gitconfig.local`），**不入库**；仓库只发 `.example` 模板。
+* 安装期**部分联网**：brew 包、pip 包、zsh 插件（codeload 拉取缓存）、Homebrew 本身（全新 macOS）。vim 插件离线随仓。
+* 幂等：重跑不产生副作用，干净机器全量安装、已有机器秒退。
 
 ## 仓库布局
 
 ```
 dotfiles/
-├── install                    # 主入口：实际链接/复制/软链逻辑
+├── install                  # 主入口：装依赖 → 软链 → 装字体 → 收尾（幂等）
 ├── zsh/
-│   ├── zshrc                  # 主 rc；用 zsh_plugin_fetch 按需拉取插件到 $ZSH_PLUGINS_DIR
-│   ├── mo-prompt.zsh          # 调 ~/.mo/config/prompts.zsh
-│   ├── p10k.zsh               # powerlevel10k 配置（默认）
-│   └── p9k.zsh                # powerlevel9k 配置（用 DOTFILES_USE_P9K=1 启用）
+│   ├── zshrc                # 主 rc；zsh_plugin_fetch 按需拉取插件到 $ZSH_PLUGINS_DIR
+│   └── aliases              # 共享 alias（zsh/bash 都 source）
+├── bash/
+│   └── bashrc               # 优先 exec 进 zsh；纯 bash 会话时 source 共享 alias
+├── config/
+│   └── starship.toml        # starship 提示符配置 → ~/.config/starship.toml
 ├── tmux/
 │   └── tmux.conf
 ├── vim/
 │   ├── vimrc
-│   └── plugins-vendor/        # vim 插件本体（随仓库带，离线可用）
-├── gitconfig                  # 含 include! 指向 local/ 的 gitconfig.local
-├── github-cli                 # gh 配置
-├── local/                     # 机器本地、不入库的内容
-│   ├── zshrc.local
-│   └── gitconfig.local
-│   （示例：zshrc.local.example / gitconfig.local.example）
+│   └── plugins-vendor/      # vim 插件本体（随仓库带，离线可用）
+├── git/
+│   ├── gitconfig            # 含 include! 指向 local/gitconfig.local
+│   └── gitignore_global
+├── agents/
+│   └── skills/              # 各 coding agent 共用的 skills
+├── fonts/                   # Maple Mono Nerd Font CN（install 拷到用户字体目录）
+├── local/                   # 机器本地、不入库（只有 .example 入库）
+│   ├── zshrc.local          # → ~/.zshrc.local（代理/PATH/密钥）
+│   └── gitconfig.local      # → ~/.gitconfig.local（git 身份）
 └── README.md
 ```
 
-`./install` 只负责把这些文件软链到 `$HOME`（链接表见 `install`）。`vim/plugins-vendor/` 下面是普通文件——没有 git 子模块，也没有 upstream 的提交历史。
-
 ## 前置条件
 
+一台机器只需要：
+
 ```
-zsh tmux vim gh curl
+git    # clone 仓库
+curl   # Homebrew 安装脚本（无 brew 的 macOS）
 ```
 
-* **tmux ≥ 1.9**：用了 `source-file` / `refresh-client`。
-* **zsh ≥ 5.1** 才会用 `powerlevel10k`；低于该版本自动退化到 `powerlevel9k`。
-* 在 **zsh 5.0.x + 非 UTF-8 locale** 上（典型如某些 macOS 15+ 容器化 zsh）P10K 加载会失败，脚本会捕获 `zerr` 回退到 P9K 纯文本配置。
-* **联网**：zsh 插件在首次加载时按 `codeload.github.com` 拉取（离线场景可先把 tarball 放进 `$ZSH_PLUGINS_DIR`，见下文）。仅 zsh 插件需要联网，vim 插件离线。
+其余全部由 `./install` 自动补齐：
+
+| 平台 | 安装 |
+|---|---|
+| macOS | 无 brew 时先自动装 Homebrew（首次需点一下 Xcode CLT 弹窗）；然后 brew 装 `git zsh tmux starship eza ripgrep ctags node python@3.15` + `rapid-mlx`；pip 装 `argcomplete` |
+| Linux | `apt` / `dnf` / `yum` 尽力而为装 `git zsh tmux eza ripgrep ctags nodejs npm python3 python3-pip`（无 root 时自动 sudo）；pip 装 `argcomplete`（`--user`） |
+
+另有两类运行时联网拉取（首次开 shell）：
+
+- **zsh 插件**：`zsh/zshrc` 的 `zsh_plugin_fetch` 从 `codeload.github.com` 拉 tarball 缓存到 `$ZSH_PLUGINS_DIR`（oh-my-zsh、zsh-autosuggestions、zsh-syntax-highlighting）。
+- **字体**：`fonts/` 随仓自带，install 拷贝 + 刷新字体缓存，离线可用。
 
 ## 安装 / 更新
 
 ```sh
-./install
+git clone git@github.com:ShuangqiLi/dotfiles.git
+cd dotfiles && ./install
+exec zsh
 ```
 
-会做的事（幂等）：
-1. 把顶层文件软链到 `$HOME`（`zsh/zshrc` → `~/.zshrc`、`vim/vimrc` → `~/.vimrc`、`gitconfig` → `~/.gitconfig`、`github-cli` → `~/.github-cli`、`tmux/tmux.conf` → `~/.tmux/tmux.conf`）。
-2. 把 `local/zshrc.local` 复制到 `~/.zshrc.local`（不存在时）。
-3. 把 `local/gitconfig.local` 复制到 `~/.gitconfig.local`（不存在时）。
+`./install` 做的事（幂等）：
 
-如果某处的目标文件已存在但不是软链，脚本会先备份到 `.<name>.bak.<timestamp>` 再覆盖。
+1. 缺失的 `local/zshrc.local` / `local/gitconfig.local` 从 `.example` 模板复制；
+2. 安装缺失的工具依赖（brew / apt / dnf / yum + pip，见上表）；
+3. 清理 `$HOME` 顶层断链；
+4. 软链配置（下表）；
+5. 安装 `fonts/` 到 `~/Library/Fonts`（macOS）或 `~/.local/share/fonts`（Linux）；
+6. 建 vim 缓存目录，打印后续提示（改 git 身份等）。
 
-**重新链接**（改了 `install` 的链接表之后）：
-```sh
-yes | ./install
-```
-脚本默认 `read -r -p` 交互询问覆盖；管道/非交互调用时 `read` 在 EOF 直接退出，不会回退确认。
+**链接表**：
+
+| 仓库内 | 目标 |
+|---|---|
+| `agents` | `~/.agents` |
+| `tmux/tmux.conf` | `~/.tmux.conf` |
+| `vim/vimrc` | `~/.vimrc` |
+| `vim` | `~/.vim` |
+| `zsh/zshrc` | `~/.zshrc` |
+| `local/zshrc.local` | `~/.zshrc.local` |
+| `bash/bashrc` | `~/.bashrc`（force） |
+| `config/starship.toml` | `~/.config/starship.toml` |
+| `git/gitconfig` | `~/.gitconfig` |
+| `local/gitconfig.local` | `~/.gitconfig.local`（force） |
+| `git/gitignore_global` | `~/.gitignore_global` |
+
+目标已存在但不是期望的软链时：带 `force` 的链接直接替换（无自动备份，在意就手动备份），其余链接报错提示手动处理。
+
+**调整安装行为**：
+
+| 环境变量 | 含义 |
+|---|---|
+| `DRY_RUN=1` | 只打印将执行的动作，不改动文件系统 |
+| `DOTFILES_INSTALL_PKGS=0` | 跳过依赖安装（纯链接/字体/收尾） |
+
+**更新**：`git pull && ./install`，然后开新 shell。
 
 ## 拉取 zsh 插件（联网）
 
-`zsh/zshrc` 顶部定义了 `zsh_plugin_fetch`，**首次缺件时**才去 codeload 拉一份小 tarball 并解压：
+`zsh/zshrc` 定义 `zsh_plugin_fetch`，**首次缺件时**从 codeload 拉小 tarball 并缓存：
 
 ```
 zsh_plugin_fetch <name> <owner/repo> <ref> <entry>
 ```
 
-* 缓存目录为 `$ZSH_PLUGINS_DIR`，默认 `${XDG_CACHE_HOME:-$HOME/.cache}/zsh-plugins`。
-* 仅当 `$ZSH_PLUGINS_DIR/<name>/<entry>` 不存在时才下载——已缓存则直接复用。
-* 拉取失败时回退到 `master`/`main` 分支，并打印警告；插件缺失时 zsh 仍能启动。
+* 缓存目录 `$ZSH_PLUGINS_DIR`，默认 `${XDG_CACHE_HOME:-$HOME/.cache}/zsh-plugins`。
+* 仅当 `$ZSH_PLUGINS_DIR/<name>/<entry>` 不存在才下载；请求的 ref 失败时回退 `master`/`main`；拉取失败不影响 zsh 启动。
 
 首次拉取的插件：
 
@@ -85,97 +125,88 @@ zsh_plugin_fetch <name> <owner/repo> <ref> <entry>
 |---|---|---|
 | oh-my-zsh | `ohmyzsh/ohmyzsh` | `master` |
 | zsh-autosuggestions | `zsh-users/zsh-autosuggestions` | `master` |
-| powerlevel10k (+ gitstatus) | `romkatv/powerlevel10k` | `master` |
-| powerlevel9k | `bhilburn/powerlevel9k` | `master` |
 | zsh-syntax-highlighting | `zsh-users/zsh-syntax-highlighting` | `master` |
 
-**离线场景**：把对应 tarball 手动放进 `$ZSH_PLUGINS_DIR/<name>/`（与解压结果结构一致），`zsh_plugin_fetch` 发现已存在就跳过下载。
+**刷新单个插件**：`rm -rf "$ZSH_PLUGINS_DIR/<name>"`，下次启动重拉。
+**离线场景**：把对应 tarball 解压进 `$ZSH_PLUGINS_DIR/<name>/`（结构一致）即可跳过下载。
 
-没有插件管理器：不依赖 `omz update` / `antidote` / `zinit` 之类。每个插件就是一份小 tarball，刷新方式见下。
+没有插件管理器：不依赖 `omz update` / `antidote` / `zinit`。
 
-## 刷新单个 zsh 插件
+## starship 提示符
 
-```sh
-# 删掉缓存，下次启动 zsh 就会重新拉取
-rm -rf "$ZSH_PLUGINS_DIR/powerlevel10k"
+```
+eval "$(starship init zsh)"        # zshrc 中
+~/.config/starship.toml            # → dotfiles/config/starship.toml
 ```
 
-## 软链表（`install`）
-
-| 仓库内 | 目标 |
-|---|---|
-| `zsh/zshrc` | `~/.zshrc` |
-| `zsh/mo-prompt.zsh`   | `~/.mo-prompt.zsh` |
-| `zsh/p10k.zsh`       | `~/.p10k.zsh` |
-| `zsh/p9k.zsh`        | `~/.p9k.zsh` |
-| `tmux/tmux.conf`     | `~/.tmux/tmux.conf` |
-| `vim/vimrc`          | `~/.vimrc` |
-| `gitconfig`          | `~/.gitconfig` |
-| `github-cli`         | `~/.github-cli` |
-
-（`local/zshrc.local` 与 `local/gitconfig.local` 是 **copy 而非 symlink**，让每台机器各自维护。）
+onedark 风格：紫色目录、绿色分支、黄色 git 状态、Nerd Font 图标（Maple Mono）。
+同步计算（无 gitstatus 后台进程），`starship --timings` 可查各段耗时。
 
 ## 环境变量
 
 | 名 | 默认 | 含义 |
 |---|---|---|
 | `ZSH_PLUGINS_DIR` | `${XDG_CACHE_HOME:-$HOME/.cache}/zsh-plugins` | zsh 插件缓存目录 |
-| `TMUX_NO_ATTACH` | 空 | 非空时登录 shell 不自动 attach 已存在 tmux session |
-| `DOTFILES_USE_P9K` | 空 | 非空则 zsh 加载 `~/.p9k.zsh`（默认用 `~/.p10k.zsh`） |
-| `MO_PROMPT` / `MO_PROMPT_MODE` | 见 `~/.mo/config/prompts.zsh` | mo 项目侧的 prompt 配置 |
+| `DRY_RUN` | 空 | 非空时 install 只打印不执行 |
+| `DOTFILES_INSTALL_PKGS` | `1` | 置 0 跳过 install 的依赖安装步骤 |
 
-zsh prompt 顺序：mo 状态 → `powerlevel10k` / `powerlevel9k`（二选一）→ autosuggestions + 语法高亮。
-`powerlevel10k` / `powerlevel9k` 在仓库里都带一份缓存，二选一加载；`zsh/p9k.zsh` 只 `autoload powerlevel9k`（不加载 powerlevel10k），并带一层 `zerr` 回退：在 zsh 5.0.x + 非 UTF-8 locale 上 P9K 的 `icons.zsh` 会因为 `$'\uXXXX'` 被截断，本文件会 catch 住并退化到纯文本 prompt。
+## 机器本地配置（`local/`）
+
+`local/` 在 `.gitignore` 里，仓库只发模板：
+
+```sh
+# install 会自动从模板复制缺失文件；随后按需编辑
+$EDITOR local/gitconfig.local   # git 身份（gitconfig 的 include!）
+$EDITOR local/zshrc.local       # 代理、PATH、API 密钥、机器特有 env
+```
+
+**千万别提交** `local/zshrc.local` 和 `local/gitconfig.local`（都已在 `.gitignore`）。
 
 ## 已知坑
 
 ### Vim 8.1 与 Vim 8.2 的 `set runtimepath` 差异
 
-本仓 `vimrc` 同时支持 **Vim 8.1** 和 **Vim 8.2**。关键区别在 `~/.vim/autoload/plug.vim` 加载前的 `set rtp=` 重写：
+`vim/vimrc` 同时支持 **Vim 8.1** 和 **8.2**。关键在 `~/.vim/autoload/plug.vim` 加载前的 `set rtp=` 重写：
 
 | 版本 | 行为 |
 |---|---|
-| Vim 8.1 | `set rtp+=...; set rtp-=/usr/share/vim/...` 不会报错，但顺序不可控 |
-| Vim 8.2 | `set rtp-=X` 在 X 不在 runtimepath 时抛 `E521: ...` 警告，且 `set rtp=` 整条会**清空**当前 rtp |
+| Vim 8.1 | `set rtp+=...` 不会报错，但顺序不可控 |
+| Vim 8.2 | `set rtp-=X` 在 X 不在 rtp 时抛 `E521` 警告，且 `set rtp=` 整条会**清空**当前 rtp |
 
-`vim/vimrc` 顶部按 `v:version` 分支：8.2 用 `set rtp=...` 直接重写；8.1 走 `set rtp+=` 增量。这样 8.1 / 8.2 都能正常加载 `vim/plugins/` 与 `vim/plugins-vendor/`。
+`vimrc` 顶部按 `v:version` 分支处理，8.1 / 8.2 都能正常加载 `vim/plugins-vendor/`。
 
-### 在 Vim 8.1 上 `Plug#...#Update!` 行为
+### Tmux + pi agent 的扩展键
 
-`plug.vim` 老版本对 `g:plug_update=1` 的处理与新版不一致：
-- 8.1：`Plug ... | Update!` 会触发 `git pull --ff-only`，需要联网且 `--ff-only` 在某些仓库上失败。
-- 8.2：`Update!` 走 `--force-rebase`，更宽容。
-
-本仓 `vim/plugins-vendor/` 是**纯文件**（git 不跟踪 upstream history），所以不依赖 `Plug ... | Update!` 在线拉取；离线/在线都能用。
-
-### Tmux + powerlevel10k 的 `git` 段
-
-`tmux/tmux.conf` 默认 prefix 为 `C-q`（避开 `C-b`，与 Vim `i` 模式下的 `C-o` 不冲突；避开 `C-c`/C-v，macOS 终端常用）。
-P10K 的 git 段在 tmux 内会读 `TMUX_PANE_WORKING_DIR`；若 `gitstatus` 已加载（zsh 拉取时附带），git 段实时更新。
+tmux 默认把 `Shift+Enter` / `Ctrl+Enter` / `Enter` 上报为同一键，pi agent 无法区分"换行"和"提交"。
+`tmux/tmux.conf` 已启用 `extended-keys on` + `extended-keys-format csi-u`（需 tmux 3.5+；本机 3.8）。
+改完配置需重启 tmux server（`tmux kill-server`）对新会话生效。
 
 ### 字体
 
-P10K / P9K 的 `nerdfont-complete` 段需要 **Meslo LGS NF**（nerd-font），否则图标位置显示为方块。
-本仓不再内置字体，请自行安装 Meslo LGS NF 并在你的终端中选用。
+`fonts/` 内置 **Maple Mono Nerd Font CN**（16 个字重，覆盖 starship / pi / 各种 Nerd Font 图标）。
+install 拷贝到 `~/Library/Fonts`（macOS）或 `~/.local/share/fonts` + `fc-cache`（Linux）；在终端设置里选用 `Maple Mono` 即可。
 
 ## 卸载
 
 ```sh
-# 1. 解链 dotfiles
-for f in .zshrc .p10k.zsh .p9k.zsh .mo-prompt.zsh .vimrc .gitconfig .github-cli; do
+cd dotfiles
+# 1. 解链
+for f in .agents .tmux.conf .vimrc .vim .zshrc .zshrc.local .bashrc \
+         .gitconfig .gitconfig.local .gitignore_global; do
   [ -L "$HOME/$f" ] && unlink "$HOME/$f"
 done
-rm -f "$HOME/.tmux/tmux.conf"
+unlink "$HOME/.config/starship.toml"
 
-# 2. 删缓存（zsh 插件缓存 + 备份）
+# 2. 删运行时产物
 rm -rf "${ZSH_PLUGINS_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/zsh-plugins}"
-find "$HOME" -maxdepth 1 -name '.*.bak.*' -print -delete
+rm -rf "$HOME/Library/Fonts"/MapleMono-*.ttf     # 字体（macOS）
 ```
 
-`vim/plugins-vendor/` 是纯文件，随仓库一起删；如想保留已 vendor 的插件备份，先 `cp -a vim/plugins-vendor /tmp/` 再删仓库。
+brew 装的依赖（tmux starship eza …）用 `brew uninstall` 自行处理；`local/` 里的真实配置在仓库内，随仓库删除或先备份。
 
 ## 维护提示
 
-* **改 `zsh/zshrc` 的插件清单后**：删掉对应缓存目录即可触发重拉，无需动仓库。
-* **改 `vim/plugins-vendor/` 后**：跑一次 `:PlugClean`。
-* **改 `install` 链接表后**：`yes | ./install` 重链一次。
+* **改 `zsh/zshrc` 插件清单**：删对应 `$ZSH_PLUGINS_DIR/<name>` 触发重拉。
+* **改 `vim/plugins-vendor/`**：跑一次 `:PlugClean`。
+* **改 `install` 链接表**：重跑 `./install`（force 链接自动替换，非 force 需手动）。
+* **改 `tmux/tmux.conf`**：`tmux source-file ~/.tmux.conf`（extended-keys 类改动需重启 server）。
