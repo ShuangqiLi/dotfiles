@@ -74,6 +74,7 @@ link() {
 }
 
 link agents                   "$HOME/.agents"
+link tmux/tmux.conf           "$HOME/.tmux.conf"
 link vim/vimrc                "$HOME/.vimrc"
 link vim                      "$HOME/.vim"
 link zsh/zshrc                "$HOME/.zshrc"
@@ -84,7 +85,46 @@ link zsh/p9k.zsh              "$HOME/.p9k.zsh"
 link git/gitconfig            "$HOME/.gitconfig"
 link local/gitconfig.local    "$HOME/.gitconfig.local"      force
 link git/gitignore_global     "$HOME/.gitignore_global"
-link tmux/tmux.conf           "$HOME/.tmux.conf"
+
+# --- Step 3b: install fonts ------------------------------------------------
+# Copies bundled fonts (e.g. MapleMono Nerd Font) into the user font directory:
+# macOS ~/Library/Fonts, Linux ~/.local/share/fonts (+ fontconfig cache rebuild).
+link_font_dir() {
+  local src="$1"
+  if [[ ! -d "$src" ]]; then
+    ok "No fonts bundled; skipping"
+    return 0
+  fi
+  local dst
+  if [[ $(uname) == "Darwin" ]]; then
+    dst="$HOME/Library/Fonts"
+  else
+    dst="${XDG_DATA_HOME:-$HOME/.local/share}/fonts"
+  fi
+  local f base count=0
+  for f in "$src"/*; do
+    [[ -f "$f" ]] || continue
+    base="$(basename "$f")"
+    if [[ -f "$dst/$base" ]]; then
+      ok "$dst/$base"
+      continue
+    fi
+    info "Installing font: $base"
+    run mkdir -p "$dst"
+    run cp "$f" "$dst/$base"
+    count=$((count + 1))
+  done
+  if [[ "$count" -gt 0 ]]; then
+    if [[ $(uname) == "Darwin" ]]; then
+      run system_profiler SPFontsDataType >/dev/null 2>&1 || true  # nudge macOS to rescan
+    else
+      run fc-cache -f "$dst" 2>/dev/null || true
+    fi
+  fi
+  ok "Fonts -> $dst"
+}
+
+link_font_dir "$DOTFILES/fonts"
 
 # --- Step 4: post-link hooks -----------------------------------------------
 info "Clearing Powerlevel10k instant-prompt cache"
