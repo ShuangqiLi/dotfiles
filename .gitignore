@@ -1,5 +1,5 @@
 # 每台机器自己的（不要 push）
-local/env.zsh
+local/zshrc.local
 local/gitconfig.local
 
 # zsh 插件缓存（已迁移到 $ZSH_PLUGINS_DIR 联网拉取，不再随仓带）

@@ -105,7 +105,7 @@ if [[ -z "$SSH_CONNECTION" && -z "$DISPLAY" && -z "$WAYLAND_DISPLAY" && "$OSTYPE
 fi
 
 ######################################################################
-# Shared aliases (used by both zsh and bash)
+# aliases
 ######################################################################
 [[ -f "$DOTFILES/zsh/aliases" ]] && source "$DOTFILES/zsh/aliases"
 
@@ -118,11 +118,6 @@ fg() {
   fi
 }
 
-Cscope() {
-  find $(pwd) -type f -name "*.hpp" -o -name "*.cpp" -o -name "*.h" -o -name "*.c" -o -name "*.hh" -o -name "*.cc" > cscope.files
-  cscope -bR
-}
-
-# Machine-specific env (not in git): see local/env.zsh.example
-[[ -f "$DOTFILES/local/env.zsh" ]] && source "$DOTFILES/local/env.zsh"
+# Machine-specific env (not in git): see local/zshrc.local.example
+[[ -f "$DOTFILES/local/zshrc.local" ]] && source "$DOTFILES/local/zshrc.local"
 

@@ -1,0 +1,6 @@
+# Copy to zshrc.local (ignored by git):  cp local/zshrc.local.example local/zshrc.local
+# Sourced at the end of zsh/zshrc — use for proxy, PATH, API keys, DISPLAY, etc.
+
+# export HTTP_PROXY=http://127.0.0.1:7890
+# export HTTPS_PROXY="$HTTP_PROXY"
+# export PATH="/opt/custom/bin:$PATH"

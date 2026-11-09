@@ -8,7 +8,7 @@
 
 约定：
 
-* 仓库里的所有文件用占位符 `{{USER}}` / `{{HOST}}` 表示因人而异的内容；机器本地的差异放在 `local/` 下（`local/env.zsh`、`local/gitconfig.local`）。
+* 仓库里的所有文件用占位符 `{{USER}}` / `{{HOST}}` 表示因人而异的内容；机器本地的差异放在 `local/` 下（`local/zshrc.local`、`local/gitconfig.local`）。
 * 安装期**需要联网**：zsh 插件在首次加载时通过 codeload 拉取并缓存，不随仓库分发。仅 `vim/plugins-vendor/` 是离线随仓自带的。
 
 ## 仓库布局
@@ -29,9 +29,9 @@ dotfiles/
 ├── gitconfig                  # 含 include! 指向 local/ 的 gitconfig.local
 ├── github-cli                 # gh 配置
 ├── local/                     # 机器本地、不入库的内容
-│   ├── env.zsh
+│   ├── zshrc.local
 │   └── gitconfig.local
-│   （示例：env.zsh.example / gitconfig.local.example）
+│   （示例：zshrc.local.example / gitconfig.local.example）
 └── README.md
 ```
 
@@ -56,8 +56,8 @@ zsh tmux vim gh curl
 
 会做的事（幂等）：
 1. 把顶层文件软链到 `$HOME`（`zsh/zshrc` → `~/.zshrc`、`vim/vimrc` → `~/.vimrc`、`gitconfig` → `~/.gitconfig`、`github-cli` → `~/.github-cli`、`tmux/tmux.conf` → `~/.tmux/tmux.conf`）。
-2. 把 `local/env.zsh` 复制到 `~/.config/local/env.zsh`（不存在时）。
-3. 把 `local/gitconfig.local` 复制到 `~/.config/gitconfig.local`（不存在时）。
+2. 把 `local/zshrc.local` 复制到 `~/.zshrc.local`（不存在时）。
+3. 把 `local/gitconfig.local` 复制到 `~/.gitconfig.local`（不存在时）。
 
 如果某处的目标文件已存在但不是软链，脚本会先备份到 `.<name>.bak.<timestamp>` 再覆盖。
 
@@ -113,7 +113,7 @@ rm -rf "$ZSH_PLUGINS_DIR/powerlevel10k"
 | `gitconfig`          | `~/.gitconfig` |
 | `github-cli`         | `~/.github-cli` |
 
-（`local/env.zsh` 与 `local/gitconfig.local` 是 **copy 而非 symlink**，让每台机器各自维护。）
+（`local/zshrc.local` 与 `local/gitconfig.local` 是 **copy 而非 symlink**，让每台机器各自维护。）
 
 ## 环境变量
 

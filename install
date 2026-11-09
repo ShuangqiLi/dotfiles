@@ -70,19 +70,19 @@ if [[ ! -f local/gitconfig.local ]]; then
   info "Creating local/gitconfig.local from template"
   run cp local/gitconfig.local.example local/gitconfig.local
 fi
-if [[ ! -f local/env.zsh ]]; then
-  info "Creating local/env.zsh from template (edit for proxy/PATH/keys)"
-  run cp local/env.zsh.example local/env.zsh
+if [[ ! -f local/zshrc.local ]]; then
+  info "Creating local/zshrc.local from template (edit for proxy/PATH/keys)"
+  run cp local/zshrc.local.example local/zshrc.local
 fi
 
 # --- Step 2: install missing packages ---------------------------------------
 # Tools referenced by this repo:
 #   git zsh tmux starship eza ripgrep ctags node python
-# Plus the Python deps local/env.zsh.example relies on.
+# Plus the Python deps local/zshrc.local.example relies on.
 BREW_FORMULAS=(git zsh tmux starship eza ripgrep ctags node python@3.15)
 BREW_TAPS=(rapid-mlx)
 APT_PACKAGES=(git zsh tmux eza ripgrep ctags nodejs npm python3 python3-pip)
-# Plus the Python deps local/env.zsh.example relies on (user-level, no sudo).
+# Plus the Python deps local/zshrc.local.example relies on (user-level, no sudo).
 PIP_PACKAGES=(argcomplete)
 
 install_pkgs() {
@@ -161,7 +161,7 @@ install_pkgs() {
     fi
   fi
 
-  # Python deps used by local/env.zsh.example (user-level, no sudo).
+  # Python deps used by local/zshrc.local.example (user-level, no sudo).
   if command -v pip3 >/dev/null 2>&1; then
     for p in "${PIP_PACKAGES[@]}"; do
       if pip3 show "$p" >/dev/null 2>&1; then
@@ -225,7 +225,7 @@ link tmux/tmux.conf           "$HOME/.tmux.conf"
 link vim/vimrc                "$HOME/.vimrc"
 link vim                      "$HOME/.vim"
 link zsh/zshrc                "$HOME/.zshrc"
-link local/env.zsh            "$HOME/.zshrc.local"
+link local/zshrc.local            "$HOME/.zshrc.local"
 link bash/bashrc              "$HOME/.bashrc"               force
 link config/starship.toml     "$HOME/.config/starship.toml"
 link git/gitconfig            "$HOME/.gitconfig"
@@ -279,4 +279,4 @@ run mkdir -p "$HOME/.cache/vim/swap" "$HOME/.cache/vim/backup" "$HOME/.cache/vim
 echo
 ok "All tasks completed."
 info "New shell session:  exec zsh"
-info "Edit local/env.zsh (proxy/PATH/keys) and local/gitconfig.local (git identity) if needed."
+info "Edit local/zshrc.local (proxy/PATH/keys) and local/gitconfig.local (git identity) if needed."

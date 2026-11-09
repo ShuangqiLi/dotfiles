@@ -32,4 +32,4 @@ unset _d
 [[ -f "$DOTFILES/zsh/aliases" ]] && source "$DOTFILES/zsh/aliases"
 
 # Machine-specific env (not in git)
-[[ -f "$DOTFILES/local/env.zsh" ]] && source "$DOTFILES/local/env.zsh"
+[[ -f "$DOTFILES/local/zshrc.local" ]] && source "$DOTFILES/local/zshrc.local"
