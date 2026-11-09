@@ -80,8 +80,7 @@ link vim                      "$HOME/.vim"
 link zsh/zshrc                "$HOME/.zshrc"
 link local/env.zsh            "$HOME/.zshrc.local"
 link bash/bashrc              "$HOME/.bashrc"               force
-link zsh/p10k.zsh             "$HOME/.p10k.zsh"
-link zsh/p9k.zsh              "$HOME/.p9k.zsh"
+link config/starship.toml     "$HOME/.config/starship.toml"
 link git/gitconfig            "$HOME/.gitconfig"
 link local/gitconfig.local    "$HOME/.gitconfig.local"      force
 link git/gitignore_global     "$HOME/.gitignore_global"
@@ -127,9 +126,6 @@ link_font_dir() {
 link_font_dir "$DOTFILES/fonts"
 
 # --- Step 4: post-link hooks -----------------------------------------------
-info "Clearing Powerlevel10k instant-prompt cache"
-run rm -f "${XDG_CACHE_HOME:-$HOME/.cache}"/p10k-instant-prompt-*.zsh
-
 info "Creating Vim cache directories"
 run mkdir -p "$HOME/.cache/vim/swap" "$HOME/.cache/vim/backup" "$HOME/.cache/vim/undo" "$HOME/.cache/vim/plugged"
 

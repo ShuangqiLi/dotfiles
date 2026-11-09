@@ -1,0 +1,46 @@
+# Shared aliases for zsh and bash (sourced by both). Keep POSIX-compatible.
+
+# --- ls (eza preferred) ------------------------------------------------------
+if command -v eza &>/dev/null; then
+  alias ls='eza --icons --group-directories-first'
+  alias ll='eza -lh --icons --git --group-directories-first'
+  alias la='eza -a --icons --git --group-directories-first'
+  alias lt='eza --tree --level=2 --icons'
+else
+  if ls --color=auto / >/dev/null 2>&1; then
+    alias ls='ls --color=auto'
+    alias ll='ls -l --color=auto'
+    alias la='ls -A --color=auto'
+  elif [ "$(uname)" = "Darwin" ]; then
+    alias ls='ls -G'
+    alias ll='ls -lG'
+    alias la='ls -AG'
+  else
+    alias ll='ls -l'
+    alias la='ls -A'
+  fi
+fi
+
+# --- navigation ---------------------------------------------------------------
+alias ..='cd ..'
+alias ...='cd ../..'
+
+# --- search -------------------------------------------------------------------
+alias grep='grep --color=auto'
+alias egrep='egrep --color=auto'
+alias fgrep='fgrep --color=auto'
+command -v rg &>/dev/null && alias rg='rg --no-heading'
+
+# --- git ----------------------------------------------------------------------
+alias gs='git status'
+alias gc='git checkout'
+alias gd='git diff -w'
+alias gl='git log'
+alias gb='git branch'
+alias gp='git pull'
+alias gf='git fetch'
+alias gsu='git submodule update --recursive --init'
+alias go='cd $(git rev-parse --show-toplevel 2>/dev/null) || true'
+
+# --- misc ---------------------------------------------------------------------
+alias Ctags='ctags -R --sort=yes --c++-kinds=+p --fields=+iaS --extras=+q --language-force=C++'

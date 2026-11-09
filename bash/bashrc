@@ -17,3 +17,19 @@ if [[ -n "$_dotfiles_zsh" && -n "${BASH_VERSION:-}" ]]; then
   exec "$_dotfiles_zsh"
 fi
 unset _dotfiles_zsh
+
+# Rarely reached (the exec above handles normal cases): bash-only session.
+# Resolve the dotfiles root from this file's real path.
+_DOTFILES="${BASH_SOURCE[0]}"
+while [[ -L "$_DOTFILES" ]]; do
+  _d="$(cd "$(dirname "$_DOTFILES")" && pwd)"
+  _DOTFILES="$(readlink "$_DOTFILES")"
+  [[ "$_DOTFILES" = /* ]] || _DOTFILES="$_d/$_DOTFILES"
+done
+export DOTFILES="$(dirname "$(dirname "$_DOTFILES")")"
+unset _d
+
+[[ -f "$DOTFILES/zsh/aliases" ]] && source "$DOTFILES/zsh/aliases"
+
+# Machine-specific env (not in git)
+[[ -f "$DOTFILES/local/env.zsh" ]] && source "$DOTFILES/local/env.zsh"

@@ -1,0 +1,56 @@
+# Starship prompt config (sourced via: eval "$(starship init zsh)")
+# Fonts: Maple Mono Nerd Font — icons use Nerd Font glyphs.
+# Palette mirrors the p10k onedark vibe: purple/gray base, green git branch.
+
+font_size = 1
+add_newline = true
+command_timeout = 500
+
+format = """
+$directory$git_branch$git_status$git_commit$python$nodejs$rust$docker_context$cmd_duration$line_break$character"""
+
+[directories]
+truncation_length = 3
+style = "bold purple"
+format = "[$truncated_path ]($style)"
+
+[character]
+success_symbol = "[❯](bold green)"
+error_symbol = "[❯](bold red)"
+
+[git_branch]
+style = "bold green"
+format = " [$symbol$branch ]($style)"
+
+[git_status]
+style = "yellow"
+format = " [$all_status($branch) ]($style)"
+
+[git_commit]
+style = "bold purple"
+format = " [$hash ]($style)"
+
+[python]
+symbol = " "
+style = "bold yellow"
+format = " [in $symbol $pyenv_switching_string($version)]($style)"
+
+[nodejs]
+symbol = " "
+style = "bold yellow"
+format = " [$symbol($version)]($style)"
+
+[rust]
+symbol = " "
+style = "bold red"
+format = " [$symbol($version)]($style)"
+
+[docker_context]
+symbol = " "
+style = "bold blue"
+format = " [$symbol${context} ]($style)"
+
+[cmd_duration]
+min_time = 2_000
+style = "bold cyan"
+format = " took [$duration ]($style)"
