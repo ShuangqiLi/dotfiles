@@ -15,20 +15,14 @@ set showmatch
 set smartcase
 set incsearch
 set nohidden
-set swapfile
-set backup
-set undofile
-set directory=~/.cache/vim/swap//
-set backupdir=~/.cache/vim/backup//
-set undodir=~/.cache/vim/undo//
+set noswapfile
+set nobackup
+set noundofile
 set magic
 set autoread
 set autowrite
 set autowriteall
 set backspace=indent,eol,start
-
-"set background=dark
-"colorscheme solarized
 
 set encoding=utf8
 set ffs=unix
@@ -86,7 +80,7 @@ nnoremap <c-right> <c-w>>
 vnoremap <silent> * :<c-u>call VisualSelection()<CR>/<CR>=@/<CR><CR>
 vnoremap <silent> # :<c-u>call VisualSelection()<CR>?<CR>=@/<CR><CR>
 
-"inoremap <tab> <c-n>
+inoremap <tab> <c-n>
 
 inoremap ( ()<esc>i
 inoremap ) <c-r>=ClosePair(')')<CR>
@@ -113,41 +107,9 @@ function! VisualSelection() range
   let @" = l:saved_reg
 endfunction
 
-map <F3> : UndotreeToggle<CR>
-map <F4> : call FilelistToggle()<CR>
-map <F5> : call UpdateCtags()<CR>
-map <F6> : call QuickFixToggle()<CR>
 map <F7> : NERDTreeToggle<CR>
-map <F8> : TagbarToggle<CR>
-map <F9> : call RefreshAnsiLog()<CR>
 " go to xx.h/xx.cpp from xx.cpp/xx.h
 map <F12> : AV<CR>
-
-function! UpdateCtags()
-  let curdir = expand("%:p:h")
-  execute ":cd `git rev-parse --show-toplevel`"
-  !ctags -R --sort=yes --c++-kinds=+p --fields=+iaS --extras=+q --language-force=C++
-  !find $(pwd) -type f -name "*.hpp" -o -name "*.cpp" -o -name "*.h" -o -name "*.c" -o -name "*.hh" -o -name "*.cc" > cscope.files
-  !cscope -bR
-  execute ":cd " . curdir
-endfunction
-
-function! FilelistToggle()
-  tabnew `git rev-parse --show-toplevel`/cscope.files
-endfunction
-
-function! QuickFixToggle()
-  if empty(filter(range(1, winnr('$')), 'getwinvar(v:var, "&buftype") == "quickfix"'))
-    copen
-  else
-    cclose
-  endif
-endfunction
-
-function! RefreshAnsiLog()
-  execute ":AnsiEsc"
-  execute ":%s/\r//g"
-endfunction
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Ctags & Cscope
@@ -185,22 +147,15 @@ nmap <leader>f :cs find f <C-R>=expand("<cfile>")<CR><CR>
 nmap <leader>i :cs find i <C-R>=expand("<cfile>")<CR><CR>
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""
-" => Plugin (vim-plug — autoload/plug.vim ships with this dotfiles vim dir)
+" => Plugin
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""
 set nocompatible
 
-" 插件在 ~/.vim/plugins-vendor/ 下随仓库分发（无联网 git clone）。
 call plug#begin('~/.cache/vim/plugged')
-Plug '~/.vim/plugins-vendor/nerdtree'
-Plug '~/.vim/plugins-vendor/undotree'
-Plug '~/.vim/plugins-vendor/tagbar'
-Plug '~/.vim/plugins-vendor/lightline.vim'
-Plug '~/.vim/plugins-vendor/vim-fugitive'
-Plug '~/.vim/plugins-vendor/vim-systemc'
-Plug '~/.vim/plugins-vendor/verilog_systemverilog.vim'
-Plug '~/.vim/plugins-vendor/cecutil'
-Plug '~/.vim/plugins-vendor/AnsiEsc.vim'
-Plug '~/.vim/plugins-vendor/a.vim'
+Plug 'scrooloose/nerdtree'
+Plug 'itchyny/lightline.vim'
+Plug 'tpope/vim-fugitive'
+Plug 'vim-scripts/a.vim'
 call plug#end()
 
 let g:NERDTreeMinimalUI = 1

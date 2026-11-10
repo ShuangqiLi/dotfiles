@@ -13,8 +13,16 @@ else
 fi
 
 if [[ -n "$_dotfiles_zsh" && -n "${BASH_VERSION:-}" ]]; then
-  export SHELL="$_dotfiles_zsh"
-  exec "$_dotfiles_zsh"
+  # Windows: never exec zsh from bash — that would drop the user back in
+  # conhost/cmd; Git Bash is the intended terminal. Also skip the exec when a
+  # Windows terminal is active (MSYSTEM/OSTYPE set, e.g. inside a script).
+  case "${OSTYPE:-}:${MSYSTEM:-}" in
+    msys*|cygwin*|*:MINGW*|*:MSYS*|*:CYGWIN*) ;;
+    *)
+      export SHELL="$_dotfiles_zsh"
+      exec "$_dotfiles_zsh"
+      ;;
+  esac
 fi
 unset _dotfiles_zsh
 

@@ -1,6 +1,18 @@
 # zsh
 
-export PATH=$HOME/.local/bin:/usr/local/bin:$PATH
+if [[ "${OSTYPE:-}" == msys* || "${OSTYPE:-}" == cygwin* ]]; then
+  # Windows (Git Bash / MSYS2): prepend MSYS2_PATH (zshrc.local-generated for
+  # scoop / nodejs / etc.), then the unixy dirs, then the Windows system PATH.
+  export PATH="$MSYS2_PATH$PATH"
+  export PATH="$HOME/.local/bin:/usr/local/bin:$PATH"
+  export PATH="$PATH:/c/Windows:/c/Windows/System32"
+  # git works with the Windows git executable (native file semantics for
+  # index/core files). Keep git config line endings LF everywhere.
+  export LESS="-R"
+  export PAGER=less
+else
+  export PATH="$HOME/.local/bin:/usr/local/bin:$PATH"
+fi
 
 # Repo root (this file is symlinked from <dotfiles>/zsh/zshrc). ${(%):-%x}
 # expands to the path of THIS file; :A resolves symlinks, :h:h goes up two
@@ -8,6 +20,10 @@ export PATH=$HOME/.local/bin:/usr/local/bin:$PATH
 # NOTE: this only works because .zshrc is a *symlink*. A plain copy resolves
 # to the wrong root and every plugin path below would silently no-op.
 export DOTFILES="${DOTFILES:-${${(%):-%x}:A:h:h}}"
+
+# Unix cache root (zsh plugins, vim dirs). MSYS2 has no XDG defaults; a plain
+# ~/.cache works and keeps the repo's ${XDG_CACHE_HOME:-$HOME/.cache} paths sane.
+export XDG_CACHE_HOME="${XDG_CACHE_HOME:-$HOME/.cache}"
 
 ######################################################################
 # Network zsh plugins (fetched on first use, cached under $ZSH_PLUGINS_DIR)
@@ -27,6 +43,15 @@ export ZSH_PLUGINS_DIR="${ZSH_PLUGINS_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/zsh-p
 zsh_plugin_fetch() {
   local name="$1" repo="$2" ref="$3" entry="$4"
   local dir="$ZSH_PLUGINS_DIR/$name"
+  # Windows (Git Bash without MSYS2): curl may be missing; warn once and
+  # skip the fetch — zsh still starts, the plugin is just unavailable.
+  if ! command -v curl >/dev/null 2>&1; then
+    [[ -n "${_zsh_plugin_fetch_warned:-}" ]] || {
+      printf 'zsh: curl not found — cannot fetch %s; install MSYS2 or add curl to PATH\n' "$name" >&2
+      _zsh_plugin_fetch_warned=1
+    }
+    return 0
+  fi
   if [[ ! -f "$dir/$entry" ]]; then
     rm -rf "$dir"
     local tmp tarball
@@ -76,8 +101,16 @@ zsh_plugin_fetch zsh-autosuggestions \
   zsh-users/zsh-autosuggestions master \
   zsh-autosuggestions.plugin.zsh
 
-# Prompt: Starship (brew-managed). Config: config/starship.toml (-> ~/.config/starship.toml).
-eval "$(starship init zsh)"
+# Prompt: Starship. Config: config/starship.toml (-> ~/.config/starship.toml).
+# On Windows starship is installed via scoop (see install) or cargo; on macOS
+# via brew.  If the binary is missing (fresh Windows box) print a hint and
+# fall back to the built-in prompt-fallback.zsh so the shell still works.
+if command -v starship >/dev/null 2>&1; then
+  eval "$(starship init zsh)"
+else
+  [[ -f "$DOTFILES/zsh/prompt-fallback.zsh" ]] && source "$DOTFILES/zsh/prompt-fallback.zsh"
+  printf 'starship not found — using fallback prompt.  Install it (scoop install starship / brew install starship) and re-open the shell.\n'
+fi
 
 # zsh-syntax-highlighting must be sourced last.
 zsh_plugin_fetch zsh-syntax-highlighting \
