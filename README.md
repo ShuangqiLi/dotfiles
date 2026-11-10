@@ -21,9 +21,7 @@ dotfiles/
 ├── install                  # 主入口：装依赖 → 软链 → 装字体 → 收尾（幂等）
 ├── zsh/
 │   ├── zshrc                # 主 rc；zsh_plugin_fetch 按需拉取插件到 $ZSH_PLUGINS_DIR
-│   └── aliases              # 共享 alias（zsh/bash 都 source）
-├── bash/
-│   └── bashrc               # 优先 exec 进 zsh；纯 bash 会话时 source 共享 alias
+│   └── aliases.zsh          # 共享 alias
 ├── config/
 │   └── starship.toml        # starship 提示符配置 → ~/.config/starship.toml
 ├── tmux/
@@ -91,7 +89,6 @@ exec zsh
 | `vim` | `~/.vim` |
 | `zsh/zshrc` | `~/.zshrc` |
 | `local/zshrc.local` | `~/.zshrc.local` |
-| `bash/bashrc` | `~/.bashrc`（force） |
 | `config/starship.toml` | `~/.config/starship.toml` |
 | `git/gitconfig` | `~/.gitconfig` |
 | `local/gitconfig.local` | `~/.gitconfig.local`（force） |
@@ -191,7 +188,7 @@ install 拷贝到 `~/Library/Fonts`（macOS）或 `~/.local/share/fonts` + `fc-c
 ```sh
 cd dotfiles
 # 1. 解链
-for f in .agents .tmux.conf .vimrc .vim .zshrc .zshrc.local .bashrc \
+for f in .agents .tmux.conf .vimrc .vim .zshrc .zshrc.local \
          .gitconfig .gitconfig.local .gitignore_global; do
   [ -L "$HOME/$f" ] && unlink "$HOME/$f"
 done

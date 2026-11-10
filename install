@@ -393,7 +393,8 @@ link() {
 
 # Windows: the .zshrc is a *file* sourced by zsh, but on Windows zsh reads
 # from $HOME/.zshrc — same path, but we must *copy* (not symlink) for the
-# DOTFILES resolution in zsh/zshrc to work correctly when the user is in a
+# DOTFILES resolution in zsh/zshrc (repo-root = zsh/ one level up) to work
+# correctly when the user is in a
 # directory whose path differs.  Symlinks also work when dev-mode is on;
 # link() handles the fallback automatically.
 if [[ $IS_WINDOWS -eq 1 ]]; then
@@ -406,9 +407,8 @@ link agents                   "$HOME/.agents"
 link tmux.conf                "$HOME/.tmux.conf"
 link vimrc                    "$HOME/.vimrc"
 link vim                      "$HOME/.vim"
-link zshrc                    "$HOME/.zshrc"
+link zsh/zshrc                "$HOME/.zshrc"
 link local/zshrc.local        "$HOME/.zshrc.local"
-link bashrc                   "$HOME/.bashrc"               force
 link config/starship.toml     "${XDG_CONFIG_HOME:-$HOME/.config}/starship.toml"
 link git/gitconfig            "$HOME/.gitconfig"
 link local/gitconfig.local    "$HOME/.gitconfig.local"      force
@@ -461,6 +461,17 @@ install_fonts() {
 }
 
 install_fonts "$DOTFILES/fonts"
+
+# Legacy cleanup: old layouts shipped a top-level bashrc/ that exec'd into zsh
+# (and a top-level zshrc/).  Bash is now plain system bash, so a stale
+# ~/.bashrc pointing into the repo would re-exec zsh on every bash login —
+# remove it.  (The zsh/zshrc link above already replaced any stale ~/.zshrc.)
+if [[ -L "$HOME/.bashrc" ]]; then
+  case "$(readlink "$HOME/.bashrc")" in
+    "$DOTFILES"/*) run rm -f "$HOME/.bashrc" && ok "$HOME/.bashrc (removed; it pointed into the repo)" ;;
+    *) ok "$HOME/.bashrc (external, left alone)" ;;
+  esac
+fi
 
 # --- Step 6: post-link hooks -------------------------------------------------
 info "Creating Vim cache directories"

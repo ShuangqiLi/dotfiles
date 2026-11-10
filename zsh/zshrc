@@ -14,9 +14,10 @@ else
   export PATH="$HOME/.local/bin:/usr/local/bin:$PATH"
 fi
 
-# Repo root (this file is symlinked from <dotfiles>/zsh/zshrc). ${(%):-%x}
-# expands to the path of THIS file; :A resolves symlinks, :h:h goes up two
-# levels (zsh/zshrc -> zsh -> repo root), so DOTFILES is the repo root.
+# Repo root (this file is symlinked from ~/.zshrc to <dotfiles>/zsh/zshrc).
+# ${(%):-%x} expands to the path of THIS file; :A resolves symlinks, :h:h
+# goes up two levels (zsh/zshrc -> zsh -> repo root), so DOTFILES is the
+# repo root.
 # NOTE: this only works because .zshrc is a *symlink*. A plain copy resolves
 # to the wrong root and every plugin path below would silently no-op.
 export DOTFILES="${DOTFILES:-${${(%):-%x}:A:h:h}}"
@@ -103,13 +104,12 @@ zsh_plugin_fetch zsh-autosuggestions \
 
 # Prompt: Starship. Config: config/starship.toml (-> ~/.config/starship.toml).
 # On Windows starship is installed via scoop (see install) or cargo; on macOS
-# via brew.  If the binary is missing (fresh Windows box) print a hint and
-# fall back to the built-in prompt-fallback.zsh so the shell still works.
+# via brew.  A missing binary just means a bare prompt — everything else
+# (plugins, aliases, history) still works.
 if command -v starship >/dev/null 2>&1; then
   eval "$(starship init zsh)"
 else
-  [[ -f "$DOTFILES/zsh/prompt-fallback.zsh" ]] && source "$DOTFILES/zsh/prompt-fallback.zsh"
-  printf 'starship not found — using fallback prompt.  Install it (scoop install starship / brew install starship) and re-open the shell.\n'
+  printf 'starship not found — using a bare prompt.  Install it (scoop install starship / brew install starship) and re-open the shell.\n'
 fi
 
 # zsh-syntax-highlighting must be sourced last.
@@ -140,7 +140,7 @@ fi
 ######################################################################
 # aliases
 ######################################################################
-[[ -f "$DOTFILES/zsh/aliases" ]] && source "$DOTFILES/zsh/aliases"
+[[ -f "$DOTFILES/zsh/aliases.zsh" ]] && source "$DOTFILES/zsh/aliases.zsh"
 
 # zsh-only
 fg() {

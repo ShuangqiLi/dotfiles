@@ -41,6 +41,3 @@ alias gp='git pull'
 alias gf='git fetch'
 alias gsu='git submodule update --recursive --init'
 alias go='cd $(git rev-parse --show-toplevel 2>/dev/null) || true'
-
-# --- misc ---------------------------------------------------------------------
-alias Ctags='ctags -R --sort=yes --c++-kinds=+p --fields=+iaS --extras=+q --language-force=C++'
