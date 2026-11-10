@@ -2,8 +2,6 @@
 local/zshrc.local
 local/gitconfig.local
 
-# zsh 插件缓存（已迁移到 $ZSH_PLUGINS_DIR 联网拉取，不再随仓带）
-zsh/vendor/
 
 # vim 运行时在 vendored 插件目录里生成的 tags 文件（来自 :helptags 等）
 vim/plugins-vendor/*/doc/tags

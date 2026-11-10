@@ -14,13 +14,12 @@ else
   export PATH="$HOME/.local/bin:/usr/local/bin:$PATH"
 fi
 
-# Repo root (this file is symlinked from ~/.zshrc to <dotfiles>/zsh/zshrc).
-# ${(%):-%x} expands to the path of THIS file; :A resolves symlinks, :h:h
-# goes up two levels (zsh/zshrc -> zsh -> repo root), so DOTFILES is the
-# repo root.
+# Repo root (this file is symlinked from ~/.zshrc to <dotfiles>/zshrc).
+# ${(%):-%x} expands to the path of THIS file; :A resolves symlinks, :h
+# gives its parent — the repo root — so DOTFILES is the repo root.
 # NOTE: this only works because .zshrc is a *symlink*. A plain copy resolves
 # to the wrong root and every plugin path below would silently no-op.
-export DOTFILES="${DOTFILES:-${${(%):-%x}:A:h:h}}"
+export DOTFILES="${DOTFILES:-${${(%):-%x}:A:h}}"
 
 # Unix cache root (zsh plugins, vim dirs). MSYS2 has no XDG defaults; a plain
 # ~/.cache works and keeps the repo's ${XDG_CACHE_HOME:-$HOME/.cache} paths sane.
@@ -140,7 +139,7 @@ fi
 ######################################################################
 # aliases
 ######################################################################
-[[ -f "$DOTFILES/zsh/aliases.zsh" ]] && source "$DOTFILES/zsh/aliases.zsh"
+[[ -f "$DOTFILES/aliases" ]] && source "$DOTFILES/aliases"
 
 # zsh-only
 fg() {
@@ -154,3 +153,6 @@ fg() {
 # Machine-specific env (not in git): see local/zshrc.local.example
 [[ -f "$DOTFILES/local/zshrc.local" ]] && source "$DOTFILES/local/zshrc.local"
 
+if command -v zoxide >/dev/null 2>&1; then
+  eval "$(zoxide init zsh)"
+fi

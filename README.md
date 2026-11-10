@@ -19,9 +19,8 @@
 ```
 dotfiles/
 ├── install                  # 主入口：装依赖 → 软链 → 装字体 → 收尾（幂等）
-├── zsh/
-│   ├── zshrc                # 主 rc；zsh_plugin_fetch 按需拉取插件到 $ZSH_PLUGINS_DIR
-│   └── aliases.zsh          # 共享 alias
+├── zshrc                    # 主 rc；zsh_plugin_fetch 按需拉取插件到 $ZSH_PLUGINS_DIR
+├── aliases                  # 共享 alias
 ├── config/
 │   └── starship.toml        # starship 提示符配置 → ~/.config/starship.toml
 ├── tmux/
@@ -29,9 +28,8 @@ dotfiles/
 ├── vim/
 │   ├── vimrc
 │   └── plugins-vendor/      # vim 插件本体（随仓库带，离线可用）
-├── git/
-│   ├── gitconfig            # 含 include! 指向 local/gitconfig.local
-│   └── gitignore_global
+├── gitconfig                # 含 include! 指向 local/gitconfig.local
+├── gitignore_global
 ├── agents/
 │   └── skills/              # 各 coding agent 共用的 skills
 ├── fonts/                   # Maple Mono Nerd Font CN（install 拷到用户字体目录）
@@ -59,7 +57,7 @@ curl   # Homebrew 安装脚本（无 brew 的 macOS）
 
 另有两类运行时联网拉取（首次开 shell）：
 
-- **zsh 插件**：`zsh/zshrc` 的 `zsh_plugin_fetch` 从 `codeload.github.com` 拉 tarball 缓存到 `$ZSH_PLUGINS_DIR`（oh-my-zsh、zsh-autosuggestions、zsh-syntax-highlighting）。
+- **zsh 插件**：`zshrc` 的 `zsh_plugin_fetch` 从 `codeload.github.com` 拉 tarball 缓存到 `$ZSH_PLUGINS_DIR`（oh-my-zsh、zsh-autosuggestions、zsh-syntax-highlighting）。
 - **字体**：`fonts/` 随仓自带，install 拷贝 + 刷新字体缓存，离线可用。
 
 ## 安装 / 更新
@@ -87,12 +85,12 @@ exec zsh
 | `tmux/tmux.conf` | `~/.tmux.conf` |
 | `vim/vimrc` | `~/.vimrc` |
 | `vim` | `~/.vim` |
-| `zsh/zshrc` | `~/.zshrc` |
+| `zshrc` | `~/.zshrc` |
 | `local/zshrc.local` | `~/.zshrc.local` |
 | `config/starship.toml` | `~/.config/starship.toml` |
-| `git/gitconfig` | `~/.gitconfig` |
+| `gitconfig` | `~/.gitconfig` |
 | `local/gitconfig.local` | `~/.gitconfig.local`（force） |
-| `git/gitignore_global` | `~/.gitignore_global` |
+| `gitignore_global` | `~/.gitignore_global` |
 
 目标已存在但不是期望的软链时：带 `force` 的链接直接替换（无自动备份，在意就手动备份），其余链接报错提示手动处理。
 
@@ -107,7 +105,7 @@ exec zsh
 
 ## 拉取 zsh 插件（联网）
 
-`zsh/zshrc` 定义 `zsh_plugin_fetch`，**首次缺件时**从 codeload 拉小 tarball 并缓存：
+`zshrc` 定义 `zsh_plugin_fetch`，**首次缺件时**从 codeload 拉小 tarball 并缓存：
 
 ```
 zsh_plugin_fetch <name> <owner/repo> <ref> <entry>
@@ -203,7 +201,7 @@ brew 装的依赖（tmux starship eza …）用 `brew uninstall` 自行处理；
 
 ## 维护提示
 
-* **改 `zsh/zshrc` 插件清单**：删对应 `$ZSH_PLUGINS_DIR/<name>` 触发重拉。
+* **改 `zshrc` 插件清单**：删对应 `$ZSH_PLUGINS_DIR/<name>` 触发重拉。
 * **改 `vim/plugins-vendor/`**：跑一次 `:PlugClean`。
 * **改 `install` 链接表**：重跑 `./install`（force 链接自动替换，非 force 需手动）。
 * **改 `tmux/tmux.conf`**：`tmux source-file ~/.tmux.conf`（extended-keys 类改动需重启 server）。

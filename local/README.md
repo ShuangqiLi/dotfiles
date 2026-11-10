@@ -14,7 +14,7 @@ cp local/zshrc.local.example local/zshrc.local
 $EDITOR local/zshrc.local   # 改代理、PATH、密钥、DISPLAY 等
 ```
 
-新开一个 zsh 即可生效——`zsh/zshrc` 在最后通过 `$DOTFILES/local/zshrc.local` 来 source 这个文件。
+新开一个 zsh 即可生效——`zshrc` 在最后通过 `$DOTFILES/local/zshrc.local` 来 source 这个文件。
 
 ## Git 身份
 
@@ -22,7 +22,7 @@ $EDITOR local/zshrc.local   # 改代理、PATH、密钥、DISPLAY 等
 $EDITOR local/gitconfig.local   # 把 user.name / user.email 改成你自己的
 ```
 
-`git/gitconfig` 里有 `[include] path = ~/.gitconfig.local`，而 `~/.gitconfig.local` 是 `./install` 创建的指向 `local/gitconfig.local` 的软链——所以改一次就生效。
+`gitconfig` 里有 `[include] path = ~/.gitconfig.local`，而 `~/.gitconfig.local` 是 `./install` 创建的指向 `local/gitconfig.local` 的软链——所以改一次就生效。
 
 ## 千万别提交
 
