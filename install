@@ -412,7 +412,7 @@ link local/zshrc.local        "$HOME/.zshrc.local"
 link config/starship.toml     "${XDG_CONFIG_HOME:-$HOME/.config}/starship.toml"
 link gitconfig                "$HOME/.gitconfig"
 link local/gitconfig.local    "$HOME/.gitconfig.local"      force
-link git/gitignore_global     "$HOME/.gitignore_global"
+link gitignore_global         "$HOME/.gitignore_global"
 
 # --- Step 5: install fonts ---------------------------------------------------
 # Copies bundled fonts (e.g. MapleMono Nerd Font) into the user font directory:
